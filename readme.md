@@ -1,7 +1,8 @@
 # Zilly - solofng
 
 Maintained by ChillerDragon. Who did not invent fng.
-This is just yet another version of fng for teeworlds 0.7
+This is just yet another version of fng for teeworlds 0.7.
+The original fng is apparently written by some "TOM".
 
 For a probably more complete fng version that also supports teams check out:
 
