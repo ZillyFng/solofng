@@ -189,6 +189,16 @@ void CGameContext::CreateSound(vec2 Pos, int Sound, int64 Mask)
 	}
 }
 
+void CGameContext::SendChatTarget(int To, const char *pText)
+{
+	CNetMsg_Sv_Chat Msg;
+	Msg.m_Mode = CHAT_ALL;
+	Msg.m_ClientID = -1;
+	Msg.m_TargetID = -1; // use this to get ugly whisper
+	Msg.m_pMessage = pText;
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, To);
+}
+
 void CGameContext::SendChat(int ChatterClientID, int Mode, int To, const char *pText)
 {
 	char aBuf[256];
@@ -816,7 +826,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					Mode = CHAT_NONE;
 			}
 
-			if(Mode != CHAT_NONE)
+			if(pMsg->m_pMessage[0] == '/')
+				ChatCommand(ClientID, &pMsg->m_pMessage[1]);
+			else if(Mode != CHAT_NONE)
 				SendChat(ClientID, Mode, pMsg->m_Target, pMsg->m_pMessage);
 		}
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
@@ -1491,7 +1503,7 @@ void CGameContext::OnInit()
 	m_Collision.Init(&m_Layers);
 
 	// select gametype
-	if(str_comp_nocase(g_Config.m_SvGametype, "mod") == 0)
+	if(str_comp_nocase(g_Config.m_SvGametype, "solofng") == 0)
 		m_pController = new CGameControllerMOD(this);
 	else if(str_comp_nocase(g_Config.m_SvGametype, "ctf") == 0)
 		m_pController = new CGameControllerCTF(this);
@@ -1600,6 +1612,19 @@ bool CGameContext::IsClientSpectator(int ClientID) const
 {
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
 }
+
+void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
+{
+	dbg_msg("chat_cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
+	char aBuf[1024];
+	if(!str_comp_nocase(pFullCmd, "help") || !str_comp_nocase(pFullCmd, "info"))
+	{
+		str_format(aBuf, sizeof(aBuf), "solofng by ChillerDragon - v%s", FNG_VERSION);
+		SendChatTarget(ClientID, aBuf);
+		SendChatTarget(ClientID, "https://github.com/zillyfng/solofng");
+	}
+}
+
 
 const char *CGameContext::GameType() const { return m_pController && m_pController->GetGameType() ? m_pController->GetGameType() : ""; }
 const char *CGameContext::Version() const { return GAME_VERSION; }

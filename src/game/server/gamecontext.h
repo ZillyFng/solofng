@@ -135,6 +135,7 @@ public:
 	void CreateSound(vec2 Pos, int Sound, int64 Mask=-1);
 
 	// network
+	void SendChatTarget(int To, const char *pText);
 	void SendChat(int ChatterClientID, int Mode, int To, const char *pText);
 	void SendBroadcast(const char *pText, int ClientID);
 	void SendEmoticon(int ClientID, int Emoticon);
@@ -183,6 +184,10 @@ public:
 	virtual const char *NetVersion() const;
 	virtual const char *NetVersionHashUsed() const;
 	virtual const char *NetVersionHashReal() const;
+
+	// solofng
+
+	void ChatCommand(int ClientID, const char *pFullCmd);
 };
 
 inline int64 CmaskAll() { return -1; }
