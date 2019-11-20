@@ -964,6 +964,7 @@ set(EXPECTED_DATA
   maps/ctf3.map
   maps/ctf4.map
   maps/ctf5.map
+  maps/ctf5_solofng.map
   maps/ctf6.map
   maps/ctf7.map
   maps/ctf8.map
