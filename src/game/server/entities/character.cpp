@@ -59,7 +59,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = WEAPON_GUN;
+	m_ActiveWeapon = WEAPON_LASER;
 	m_LastWeapon = WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
 
@@ -532,6 +532,7 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
+	SolofngTick();
 	m_Core.m_Input = m_Input;
 	m_Core.Tick(true);
 
@@ -844,6 +845,20 @@ void CCharacter::Snap(int SnappingClient)
 
 	pCharacter->m_Direction = m_Input.m_Direction;
 
+	// change eyes and use ninja graphic if player is freeze
+	if (m_DeepFreeze)
+	{
+		if (pCharacter->m_Emote == EMOTE_NORMAL)
+			pCharacter->m_Emote = EMOTE_PAIN;
+		pCharacter->m_Weapon = WEAPON_NINJA;
+	}
+	else if (m_FreezeTime > 0 || m_FreezeTime == -1)
+	{
+		if (pCharacter->m_Emote == EMOTE_NORMAL)
+			pCharacter->m_Emote = EMOTE_BLINK;
+		pCharacter->m_Weapon = WEAPON_NINJA;
+	}
+
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->GetSpectatorID()))
 	{
@@ -865,4 +880,70 @@ void CCharacter::Snap(int SnappingClient)
 void CCharacter::PostSnap()
 {
 	m_TriggeredEvents = 0;
+}
+
+// solofng
+
+void CCharacter::SolofngTick()
+{
+	if (m_FreezeTime > 0 || m_FreezeTime == -1)
+	{
+		if (m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1 || m_FreezeTime == -1)
+		{
+			GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), vec2(0, 0), (m_FreezeTime + 1) / Server()->TickSpeed(), 0, true);
+		}
+		if (m_FreezeTime > 0)
+			m_FreezeTime--;
+		else
+			m_Ninja.m_ActivationTick = Server()->Tick();
+		m_Input.m_Direction = 0;
+		m_Input.m_Jump = 0;
+		m_Input.m_Hook = 0;
+		if (m_FreezeTime == 1)
+			UnFreeze();
+	}
+}
+
+bool CCharacter::Freeze(int Seconds)
+{
+	if ((Seconds <= 0 || m_Super || m_FreezeTime == -1 || m_FreezeTime > Seconds * Server()->TickSpeed()) && Seconds != -1)
+		return false;
+	if (m_FreezeTick < Server()->Tick() - Server()->TickSpeed() || Seconds == -1)
+	{
+		for (int i = 0; i < NUM_WEAPONS; i++)
+			if (m_aWeapons[i].m_Got)
+			{
+				m_aWeapons[i].m_Ammo = 0;
+			}
+		m_FreezeTime = Seconds == -1 ? Seconds : Seconds * Server()->TickSpeed();
+		m_FreezeTick = Server()->Tick();
+		// GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+		return true;
+	}
+	return false;
+}
+
+bool CCharacter::Freeze()
+{
+	return Freeze(g_Config.m_SvFreezeDelay);
+}
+
+bool CCharacter::UnFreeze()
+{
+	if (m_FreezeTime > 0)
+	{
+		for (int i = 0; i < NUM_WEAPONS; i++)
+			if (m_aWeapons[i].m_Got)
+			{
+				m_aWeapons[i].m_Ammo = -1;
+			}
+		if (!m_aWeapons[m_ActiveWeapon].m_Got)
+			m_ActiveWeapon = WEAPON_GUN;
+		m_FreezeTime = 0;
+		m_FreezeTick = 0;
+		if (m_ActiveWeapon == WEAPON_HAMMER) m_ReloadTimer = 0;
+		// GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+		return true;
+	}
+	return false;
 }

@@ -126,6 +126,24 @@ private:
 	CCharacterCore m_SendCore; // core that we should send
 	CCharacterCore m_ReckoningCore; // the dead reckoning core
 
+	// solofng
+
+	void SolofngTick();
+
+public:
+	bool Freeze(int Time);
+	bool Freeze();
+	bool UnFreeze();
+	bool m_Super;
+	bool m_SuperJump;
+	bool m_Jetpack;
+	bool m_NinjaJetpack;
+	int m_TeamBeforeSuper;
+	int m_FreezeTime;
+	int m_FreezeTick;
+	bool m_DeepFreeze;
+	bool m_EndlessHook;
+	bool m_FreezeHammer;
 };
 
 #endif
