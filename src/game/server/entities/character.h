@@ -128,6 +128,7 @@ private:
 
 	// solofng
 
+	int m_LastToucherID;
 	void SolofngTick();
 	void SolofngPostCoreTick();
 	void HandleTiles(int Index);

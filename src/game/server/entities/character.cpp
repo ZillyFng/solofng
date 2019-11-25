@@ -56,6 +56,7 @@ void CCharacter::Reset()
 
 bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 {
+	m_LastToucherID = -1;
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
@@ -660,6 +661,23 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
+	if (Weapon == WEAPON_SPIKE_NORMAL)
+	{
+		if (m_LastToucherID != -1 && m_FreezeTime)
+		{
+			Weapon = WEAPON_NINJA;
+			Killer = m_LastToucherID;
+			CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
+			if (pKiller)
+			{
+				pKiller->m_Score += 3;
+			}
+		}
+		else
+		{
+			Weapon = WEAPON_WORLD;
+		}
+	}
 	// we got to wait 0.5 secs before respawning
 	m_Alive = false;
 	m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
@@ -715,8 +733,16 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 {
 	m_Core.m_Vel += Force;
 
+	m_LastToucherID = From;
 	if(!m_FreezeTime && Weapon == WEAPON_LASER)
+	{
+		CPlayer *pKiller = GameServer()->m_apPlayers[From];
+		if(pKiller)
+		{
+			pKiller->m_Score++;
+		}
 		Freeze();
+	}
 
 	// create healthmod indicator
 	// GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), Source, OldHealth-m_Health, OldArmor-m_Armor, From == m_pPlayer->GetCID());
