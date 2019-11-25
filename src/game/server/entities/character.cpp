@@ -327,7 +327,7 @@ void CCharacter::FireWeapon()
 				else
 					Dir = vec2(0.f, -1.f);
 
-				pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, Dir*-1, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+				pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, Dir*-1, 0,
 					m_pPlayer->GetCID(), m_ActiveWeapon);
 				Hits++;
 			}
@@ -713,6 +713,8 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 {
 	m_Core.m_Vel += Force;
 
+	if(!Dmg)
+		return false;
 	if(From >= 0)
 	{
 		if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
