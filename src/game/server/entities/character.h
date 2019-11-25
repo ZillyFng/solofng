@@ -129,6 +129,18 @@ private:
 	// solofng
 
 	void SolofngTick();
+	void SolofngPostCoreTick();
+	void HandleTiles(int Index);
+	bool IsTile(int Tile);
+	int m_TileIndex;
+	int m_S1;
+	int m_S2;
+	int m_S3;
+	int m_S4;
+	int m_Tile1;
+	int m_Tile2;
+	int m_Tile3;
+	int m_Tile4;
 
 public:
 	bool Freeze(int Time);

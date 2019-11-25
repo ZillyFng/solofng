@@ -29,12 +29,6 @@ private:
 	int m_ID;
 	int m_ObjType;
 
-	/*
-		Variable: m_ProximityRadius
-			Contains the physical size of the entity.
-	*/
-	float m_ProximityRadius;
-
 	/* State */
 	bool m_MarkedForDestroy;
 
@@ -139,6 +133,14 @@ public:
 	int NetworkClipped(int SnappingClient, vec2 CheckPos);
 
 	bool GameLayerClipped(vec2 CheckPos);
+
+	// DDRace
+
+	/*
+		Variable: m_ProximityRadius
+			Contains the physical size of the entity.
+	*/
+	float m_ProximityRadius;
 };
 
 #endif

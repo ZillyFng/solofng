@@ -34,6 +34,14 @@ public:
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const;
 	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity, bool *pDeath=0) const;
 	bool TestBox(vec2 Pos, vec2 Size, int Flag=COLFLAG_SOLID) const;
+
+	// DDRace
+
+	int GetTileIndex(int Index);
+	int GetPureMapIndex(float x, float y);
+	int GetPureMapIndex(vec2 Pos) { return GetPureMapIndex(Pos.x, Pos.y); }
+	int GetMapIndex(vec2 Pos);
+	bool TileExists(int Index);
 };
 
 #endif

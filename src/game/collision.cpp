@@ -45,6 +45,12 @@ void CCollision::Init(class CLayers *pLayers)
 		case TILE_NOHOOK:
 			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
 			break;
+		case TILE_SPIKE_GOLD:
+		case TILE_SPIKE_NORMAL:
+		case TILE_SPIKE_RED:
+		case TILE_SPIKE_BLUE:
+			m_pTiles[i].m_Index = Index;
+			break;
 		default:
 			m_pTiles[i].m_Index = 0;
 		}
@@ -211,4 +217,37 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 
 	*pInoutPos = Pos;
 	*pInoutVel = Vel;
+}
+
+// DDRace
+
+int CCollision::GetTileIndex(int Index)
+{
+	if(Index < 0)
+		return 0;
+	return m_pTiles[Index].m_Index;
+}
+
+int CCollision::GetPureMapIndex(float x, float y)
+{
+	int Nx = clamp(round_to_int(x)/32, 0, m_Width-1);
+	int Ny = clamp(round_to_int(y)/32, 0, m_Height-1);
+	return Ny*m_Width+Nx;
+}
+
+bool CCollision::TileExists(int Index)
+{
+	return true;
+}
+
+int CCollision::GetMapIndex(vec2 Pos)
+{
+	int Nx = clamp((int)Pos.x / 32, 0, m_Width - 1);
+	int Ny = clamp((int)Pos.y / 32, 0, m_Height - 1);
+	int Index = Ny*m_Width+Nx;
+
+	if(TileExists(Index))
+		return Index;
+	else
+		return -1;
 }

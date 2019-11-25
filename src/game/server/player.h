@@ -8,6 +8,11 @@
 
 enum
 {
+	WEAPON_SPIKE_GOLD = -7,
+	WEAPON_SPIKE_NORMAL = -6,
+	WEAPON_SPIKE_RED = -5,
+	WEAPON_SPIKE_BLUE = -4,
+
 	WEAPON_GAME = -3, // team switching etc
 	WEAPON_SELF = -2, // console kill command
 	WEAPON_WORLD = -1, // death tiles etc

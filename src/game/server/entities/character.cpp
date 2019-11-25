@@ -544,6 +544,8 @@ void CCharacter::Tick()
 
 	// handle Weapons
 	HandleWeapons();
+
+	SolofngPostCoreTick();
 }
 
 void CCharacter::TickDefered()
@@ -906,6 +908,12 @@ void CCharacter::SolofngTick()
 	}
 }
 
+void CCharacter::SolofngPostCoreTick()
+{
+	int CurrentIndex = GameServer()->Collision()->GetMapIndex(m_Pos);
+	HandleTiles(CurrentIndex);
+}
+
 bool CCharacter::Freeze(int Seconds)
 {
 	if ((Seconds <= 0 || m_Super || m_FreezeTime == -1 || m_FreezeTime > Seconds * Server()->TickSpeed()) && Seconds != -1)
@@ -948,4 +956,35 @@ bool CCharacter::UnFreeze()
 		return true;
 	}
 	return false;
+}
+
+bool CCharacter::IsTile(int Tile)
+{
+	if (m_TileIndex == Tile ||
+		m_Tile1 == Tile ||
+		m_Tile2 == Tile ||
+		m_Tile3 == Tile ||
+		m_Tile4 == Tile)
+		return true;
+	return false;
+}
+
+void CCharacter::HandleTiles(int Index)
+{
+	int MapIndex = Index;
+	m_TileIndex = GameServer()->Collision()->GetTileIndex(MapIndex);
+	//Sensitivity
+	m_S1 = GameServer()->Collision()->GetPureMapIndex(vec2(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f));
+	m_S2 = GameServer()->Collision()->GetPureMapIndex(vec2(m_Pos.x + m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f));
+	m_S3 = GameServer()->Collision()->GetPureMapIndex(vec2(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y - m_ProximityRadius / 3.f));
+	m_S4 = GameServer()->Collision()->GetPureMapIndex(vec2(m_Pos.x - m_ProximityRadius / 3.f, m_Pos.y + m_ProximityRadius / 3.f));
+	m_Tile1 = GameServer()->Collision()->GetTileIndex(m_S1);
+	m_Tile2 = GameServer()->Collision()->GetTileIndex(m_S2);
+	m_Tile3 = GameServer()->Collision()->GetTileIndex(m_S3);
+	m_Tile4 = GameServer()->Collision()->GetTileIndex(m_S4);
+
+	if(IsTile(TILE_SPIKE_NORMAL))
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_SPIKE_NORMAL);
+	}
 }
