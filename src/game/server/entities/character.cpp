@@ -672,6 +672,11 @@ void CCharacter::Die(int Killer, int Weapon)
 			{
 				pKiller->m_Score += 3;
 			}
+			else
+			{
+				// maybe set it to own id idk what -1 actually means
+				Killer = -1;
+			}
 		}
 		else
 		{
