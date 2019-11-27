@@ -742,6 +742,27 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 			pKiller->m_Score++;
 		}
 		Freeze();
+		// send the kill message
+		CNetMsg_Sv_KillMsg Msg;
+		Msg.m_Victim = m_pPlayer->GetCID();
+		Msg.m_ModeSpecial = 0;
+		for(int i = 0 ; i < Server()->MaxClients(); i++)
+		{
+			if(!Server()->ClientIngame(i))
+				continue;
+
+			if(From < 0 && Server()->GetClientVersion(i) < MIN_KILLMESSAGE_CLIENTVERSION)
+			{
+				Msg.m_Killer = 0;
+				Msg.m_Weapon = WEAPON_WORLD;
+			}
+			else
+			{
+				Msg.m_Killer = From;
+				Msg.m_Weapon = Weapon;
+			}
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+		}
 	}
 
 	// create healthmod indicator
