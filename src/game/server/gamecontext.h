@@ -188,6 +188,7 @@ public:
 	// solofng
 
 	void ChatCommand(int ClientID, const char *pFullCmd);
+	int GetCIDByName(const char *pName);
 };
 
 inline int64 CmaskAll() { return -1; }

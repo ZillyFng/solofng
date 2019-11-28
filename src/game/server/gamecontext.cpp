@@ -1626,6 +1626,17 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 }
 
+int CGameContext::GetCIDByName(const char *pName)
+{
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i])
+			continue;
+		if (!str_comp(pName, Server()->ClientName(i)))
+			return i;
+	}
+	return -1;
+}
 
 const char *CGameContext::GameType() const { return m_pController && m_pController->GetGameType() ? m_pController->GetGameType() : ""; }
 const char *CGameContext::Version() const { return GAME_VERSION; }
