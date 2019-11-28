@@ -1614,6 +1614,16 @@ bool CGameContext::IsClientSpectator(int ClientID) const
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
 }
 
+void CGameContext::ShowStats(int ClientID, const char *pName)
+{
+	char aBuf[128];
+	char aName[64];
+	str_copy(aName, pName, sizeof(aName));
+	str_clean_whitespaces_simple(aName);
+	str_format(aBuf, sizeof(aBuf), "'%s' stats", aName);
+	SendChatTarget(ClientID, aBuf);
+}
+
 void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 {
 	dbg_msg("chat_cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
@@ -1623,6 +1633,22 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 		str_format(aBuf, sizeof(aBuf), "solofng by ChillerDragon - v%s", FNG_VERSION);
 		SendChatTarget(ClientID, aBuf);
 		SendChatTarget(ClientID, "https://github.com/zillyfng/solofng");
+	}
+	else if(!str_comp_nocase("cmdlist", pFullCmd))
+	{
+		SendChatTarget(ClientID, "commands: stats, cmdlist, help, info");
+	}
+	else if(!str_comp_nocase("stats", pFullCmd))
+	{
+		ShowStats(ClientID, Server()->ClientName(ClientID));
+	}
+	else if(!str_comp_nocase_num("stats ", pFullCmd, 6))
+	{
+		ShowStats(ClientID, pFullCmd+6);
+	}
+	else
+	{
+		SendChatTarget(ClientID, "unkown command try '/cmdlist'.");
 	}
 }
 
