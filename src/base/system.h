@@ -1633,6 +1633,19 @@ void secure_random_fill(void *bytes, unsigned length);
 */
 int pid();
 
+// solofng
+
+/*
+	Function: escape_url
+		Performs curl_easy_escape on buffer
+
+	Parameters:
+		buf - buffer where the escaped string gets written to
+		buf_len - max size of buffer
+		str - string to escape
+*/
+void escape_url(char *buf, int buf_len, const char *str);
+
 #ifdef __cplusplus
 }
 #endif

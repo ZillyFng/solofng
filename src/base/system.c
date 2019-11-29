@@ -2584,6 +2584,17 @@ int pid()
 #endif
 }
 
+// solofng
+
+#include <curl/curl.h>
+
+void escape_url(char *buf, int buf_len, const char *str)
+{
+	char *pEsc = curl_easy_escape(0, str, 0);
+	str_copy(buf, pEsc, buf_len);
+	curl_free(pEsc);
+}
+
 #if defined(__cplusplus)
 }
 #endif

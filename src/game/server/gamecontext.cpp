@@ -1,5 +1,6 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#include <curl/curl.h>
 #include <base/math.h>
 
 #include <engine/shared/config.h>
@@ -1620,7 +1621,9 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	char aName[64];
 	str_copy(aName, pName, sizeof(aName));
 	str_clean_whitespaces_simple(aName);
-	str_format(aBuf, sizeof(aBuf), "'%s' stats", aName);
+	char aEscape[64];
+	escape_url(aEscape, sizeof(aEscape), aName);
+	str_format(aBuf, sizeof(aBuf), "'%s' stats (%s)", aName, aEscape);
 	SendChatTarget(ClientID, aBuf);
 }
 
