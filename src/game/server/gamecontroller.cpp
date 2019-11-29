@@ -600,6 +600,7 @@ void IGameController::SetGameState(EGameState GameState, int Timer)
 		break;
 	case IGS_END_ROUND:
 	case IGS_END_MATCH:
+		GameServer()->EndRound();
 		if(GameState == IGS_END_ROUND && DoWincheckMatch())
 			break;
 		// only possible when game is running or over

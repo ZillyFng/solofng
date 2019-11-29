@@ -4,7 +4,7 @@
 #define GAME_SERVER_PLAYER_H
 
 #include "alloc.h"
-
+#include "stats.h"
 
 enum
 {
@@ -135,6 +135,26 @@ private:
 	int m_SpectatorID;
 	class CFlag *m_pSpecFlag;
 	bool m_ActiveSpecSwitch;
+
+	// solofng
+
+	// should never be written to directly
+	// make sure InitRoundStats() is called first
+	CFngStats m_RoundStats;
+
+public:
+
+	time_t m_JoinTime;
+	const CFngStats *GetRoundStats() { return &m_RoundStats; }
+	bool m_InitedRoundStats;
+	void InitRoundStats();
+	bool SaveStats(const char *pFilePath);
+
+	void AddKills(int Kills = 1);
+	void AddDeaths(int Deaths = 1);
+	void AddShots(int Shots = 1);
+	void AddFreezes(int Freezes = 1);
+	void AddFrozen(int Frozen = 1);
 };
 
 #endif

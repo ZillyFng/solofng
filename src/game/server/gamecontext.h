@@ -3,6 +3,8 @@
 #ifndef GAME_SERVER_GAMECONTEXT_H
 #define GAME_SERVER_GAMECONTEXT_H
 
+#include "stats.h"
+
 #include <engine/console.h>
 #include <engine/server.h>
 
@@ -187,9 +189,75 @@ public:
 
 	// solofng
 
-	void ChatCommand(int ClientID, const char *pFullCmd);
+	void PrintStats(int ClientID, const CFngStats *pStats);
+	bool IsFngMagic(const char *pMagic, int Size);
+	bool IsFngVersion(const char *pVersion, int Size);
+	void MergeStats(const CFngStats *pFrom, CFngStats *pTo);
+	/*
+		Function: SaveStats
+			Merges round stats with stats file
+			And then deletes the round stats
+
+		Parameters:
+			ClientID - id of stats player
+	*/
+	bool SaveStats(int ClientID);
+	/*
+	Function: LoadStats
+		Loads fng stats from file
+
+	Parameters:
+		ClientID - id to print result messages to
+		pName - username to load (unescaped)
+		pSatsBuf - buffer to stats struct that gets filled
+
+	Returns:
+		 0 - success
+		-1 - invalid file name
+		-2 - curl escape error
+		 1 - file open error
+		 2 - failed to read fng magic
+		 3 - invalid fng magic
+		 4 - failed to read fng version
+		 5 - invalid fng version
+		 6 - failed to read stats struct
+	*/
+	int LoadStats(int ClientID, const char *pName, CFngStats *pStatsBuf);
+	/*
+		Function: ShowStats
+			Shows global stats of a player
+
+		Parameters:
+			ClientID - id to show stats to
+			pName - unescaped ingame name of stats player
+	*/
 	void ShowStats(int ClientID, const char *pName);
+	/*
+		Function: ShowRoundStats
+			Shows stats of current round of a player
+
+		Parameters:
+			ClientID - id to show stats to
+			pName - unescaped ingame name of stats player
+	*/
+	void ShowRoundStats(int ClientID, const char *pName);
+	/*
+		Function: GetCIDByName
+			Takes ingame username and returns client id
+
+		Parameters:
+			pName - Username
+
+		Returns:
+			id - on success
+			-1 - if not found
+	*/
 	int GetCIDByName(const char *pName);
+	bool IsNewIp(const CFngStats *pStats, const char *pIP);
+	void PrintStatsMeta(int ClientID, const CFngStats *pStats);
+	void ShowStatsMeta(int ClientID, const char *pName);
+	void ChatCommand(int ClientID, const char *pFullCmd);
+	void EndRound();
 };
 
 inline int64 CmaskAll() { return -1; }

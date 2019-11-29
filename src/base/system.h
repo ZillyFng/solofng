@@ -1643,8 +1643,12 @@ int pid();
 		buf - buffer where the escaped string gets written to
 		buf_len - max size of buffer
 		str - string to escape
+
+	Returns:
+		0 - ok
+		1 - error
 */
-void escape_url(char *buf, int buf_len, const char *str);
+int escape_url(char *buf, int buf_len, const char *str);
 
 #ifdef __cplusplus
 }

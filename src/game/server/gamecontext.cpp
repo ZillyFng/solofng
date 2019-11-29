@@ -720,6 +720,7 @@ void CGameContext::OnClientTeamChange(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
+	SaveStats(ClientID);
 	AbortVoteOnDisconnect(ClientID);
 	m_pController->OnPlayerDisconnect(m_apPlayers[ClientID]);
 
@@ -1615,16 +1616,268 @@ bool CGameContext::IsClientSpectator(int ClientID) const
 	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
 }
 
+void CGameContext::ShowStatsMeta(int ClientID, const char *pName)
+{
+	char aBuf[128];
+	char aName[64];
+	str_copy(aName, pName, sizeof(aName));
+	str_clean_whitespaces_simple(aName);
+	CFngStats Stats;
+	if (LoadStats(ClientID, aName, &Stats) != 0)
+	{
+		str_format(aBuf, sizeof(aBuf), "[stats] player '%s' not found.", aName);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
+	PrintStatsMeta(ClientID, &Stats);
+}
+
+void CGameContext::PrintStatsMeta(int ClientID, const CFngStats *pStats)
+{
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "=== '%s' ===", pStats->m_aName);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Clan: %s", pStats->m_aClan);
+	SendChatTarget(ClientID, aBuf);
+	for (int i = 0; i < MAX_IPS; i++)
+	{
+		if (pStats->m_aaIP[i][0] == '\0')
+			continue;
+		str_format(aBuf, sizeof(aBuf), "IP[%d] %s", i, pStats->m_aaIP[i]);
+		SendChatTarget(ClientID, aBuf);
+	}
+	int minutes = (pStats->m_TotalOnlineTime % 3600) / 60;
+	int hours = (pStats->m_TotalOnlineTime % 86400) / 3600;
+	int days = (pStats->m_TotalOnlineTime % (86400 * 30)) / 86400;
+	str_format(aBuf, sizeof(aBuf), "Online time: %02d:%02d:%02d (%lds)", days, hours, minutes, pStats->m_TotalOnlineTime);
+	SendChatTarget(ClientID, aBuf);
+	strftime(aBuf, sizeof(aBuf), "%F %r", localtime(&(pStats->m_FirstSeen)));
+	SendChatTarget(ClientID, "First seen:");
+	SendChatTarget(ClientID, aBuf);
+	strftime(aBuf, sizeof(aBuf), "%F %r", localtime(&(pStats->m_LastSeen)));
+	SendChatTarget(ClientID, "Last seen:");
+	SendChatTarget(ClientID, aBuf);
+}
+
+void CGameContext::PrintStats(int ClientID, const CFngStats *pStats)
+{
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "=== '%s' ===", pStats->m_aName);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "K/D %d/%d", pStats->m_Kills, pStats->m_Deaths);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Freezes/Frozen %d/%d", pStats->m_Freezes, pStats->m_Frozen);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Shots %d", pStats->m_RifleShots);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Spree %d %d", pStats->m_Spree, pStats->m_SpreeBest);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Multi %d %d", pStats->m_Multi, pStats->m_MultiBest);
+	SendChatTarget(ClientID, aBuf);
+	for (int i = 0; i < MAX_MULTIS; i++)
+	{
+		if (!pStats->m_aMultis[i])
+			continue;
+		str_format(aBuf, sizeof(aBuf), "x%d multis %d", i, pStats->m_aMultis[i]);
+		SendChatTarget(ClientID, aBuf);
+	}
+}
+
+void CGameContext::ShowRoundStats(int ClientID, const char *pName)
+{
+	char aBuf[512];
+	int StatsID = GetCIDByName(pName);
+	if (StatsID == -1)
+	{
+		str_format(aBuf, sizeof(aBuf), "[stats] '%s' is not online.", pName);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
+	CPlayer *pPlayer = m_apPlayers[StatsID];
+	if (!pPlayer)
+	{
+		SendChatTarget(ClientID, "[stats] unexpected error please contact an admin.");
+		return;
+	}
+	pPlayer->InitRoundStats();
+	PrintStats(ClientID, pPlayer->GetRoundStats());
+}
+
 void CGameContext::ShowStats(int ClientID, const char *pName)
 {
 	char aBuf[128];
 	char aName[64];
 	str_copy(aName, pName, sizeof(aName));
 	str_clean_whitespaces_simple(aName);
-	char aEscape[64];
-	escape_url(aEscape, sizeof(aEscape), aName);
-	str_format(aBuf, sizeof(aBuf), "'%s' stats (%s)", aName, aEscape);
-	SendChatTarget(ClientID, aBuf);
+	CFngStats Stats;
+	if (LoadStats(ClientID, aName, &Stats) != 0)
+	{
+		str_format(aBuf, sizeof(aBuf), "[stats] player '%s' not found.", aName);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
+	PrintStats(ClientID, &Stats);
+}
+
+/*
+	char m_aName[MAX_NAME_LENGTH];
+	char m_aClan[MAX_CLAN_LENGTH];
+	char m_aaIP[5][64]; // IPv6 should be max 45 but :shrug:
+	int m_Kills, m_Deaths;
+	int m_Shots, m_Freezes, m_Frozen;
+	int m_Spree, m_SpreeBest;
+	int m_Multi, m_MultiBest, m_aMultis[32];
+*/
+
+bool CGameContext::IsNewIp(const CFngStats *pStats, const char *pIP)
+{
+	if (pIP == NULL || pIP[0] == '\0')
+		return false;
+	for (int i = 0; i < MAX_IPS; i++)
+	{
+		if (pStats->m_aaIP[i][0] == '\0')
+			return true;
+		if (!str_comp(pStats->m_aaIP[i], pIP))
+		{
+			dbg_msg("stats", "ip known already '%s' == '%s'", pStats->m_aaIP[i], pIP);
+			return false;
+		}
+	}
+	return true;
+}
+
+void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
+{
+	str_copy(pTo->m_aName, pFrom->m_aName, sizeof(pTo->m_aName));
+	str_copy(pTo->m_aClan, pFrom->m_aClan, sizeof(pTo->m_aClan));
+	if (IsNewIp(pTo, pFrom->m_aaIP[0]))
+	{
+		// if ip is unkown shift all old ones one back
+		// this deletes the oldest
+		for (int i = MAX_IPS - 1; i > 0; i--)
+		{
+			str_copy(pTo->m_aaIP[i+1], pTo->m_aaIP[i], sizeof(pTo->m_aaIP[i+1]));
+		}
+		// insert the new ip at the beginning
+		str_copy(pTo->m_aaIP[0], pFrom->m_aaIP[0], sizeof(pTo->m_aaIP[0]));
+	}
+	pTo->m_Kills += pFrom->m_Kills;
+	pTo->m_Deaths += pFrom->m_Deaths;
+	pTo->m_RifleShots += pFrom->m_RifleShots;
+	pTo->m_Freezes += pFrom->m_Freezes;
+	pTo->m_Frozen += pFrom->m_Frozen;
+	pTo->m_Spree = pFrom->m_Spree; // TODO: idk what current spree is used for yet
+	pTo->m_SpreeBest = max(pTo->m_SpreeBest, pFrom->m_SpreeBest); // TODO: make sure we do not forget something in m_Spree
+	pTo->m_Multi = pFrom->m_Multi; // TODO: same not sure what current multi is used for
+	pTo->m_MultiBest = max(pTo->m_MultiBest, pFrom->m_MultiBest); // TODO: ^^
+	// TODO: aMultis
+	pTo->m_LastSeen = max(pTo->m_LastSeen, pFrom->m_LastSeen);
+	pTo->m_TotalOnlineTime += pFrom->m_TotalOnlineTime;
+}
+
+bool CGameContext::SaveStats(int ClientID)
+{
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	if (!pPlayer)
+		return false;
+	if (str_find(Server()->ClientName(ClientID), "."))
+	{
+		SendChatTarget(ClientID, "[stats] save failed: invalid name.");
+		return false;
+	}
+	char aFilename[1024];
+	if (escape_url(aFilename, sizeof(aFilename), Server()->ClientName(ClientID)))
+	{
+		SendChatTarget(ClientID, "[stats] save failed: escape error.");
+		return false;
+	}
+	char aFilePath[2048];
+	str_format(aFilePath, sizeof(aFilePath), "%s/%s.acc", g_Config.m_SvStatsPath, aFilename);
+	return pPlayer->SaveStats(aFilePath);
+}
+
+bool CGameContext::IsFngMagic(const char *pMagic, int Size)
+{
+	if (Size < FNG_MAGIC_LEN)
+		return false;
+	for (int i = 0; i < FNG_MAGIC_LEN; i++)
+	{
+		if (FNG_MAGIC[i] != pMagic[i])
+			return false;
+	}
+	return true;
+}
+
+bool CGameContext::IsFngVersion(const char *pVersion, int Size)
+{
+	if (Size < FNG_VERSION_LEN)
+		return false;
+	for (int i = 0; i < FNG_VERSION_LEN; i++)
+	{
+		if (FNG_VERSION[i] != pVersion[i])
+			return false;
+	}
+	return true;
+}
+
+int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBuf)
+{
+	int err = 0;
+	if (str_find(pName, "."))
+	{
+		SendChatTarget(ClientID, "[stats] load failed: invalid name.");
+		return -1;
+	}
+	char aFilename[1024];
+	if (escape_url(aFilename, sizeof(aFilename), pName))
+	{
+		SendChatTarget(ClientID, "[stats] load failed: escape error.");
+		return -2;
+	}
+	char aFilePath[2048];
+	str_format(aFilePath, sizeof(aFilePath), "%s/%s.acc", g_Config.m_SvStatsPath, aFilename);
+	FILE *pFile;
+	pFile = fopen(aFilePath, "rb");
+	if (!pFile)
+	{
+		err = 1; goto fail;
+	}
+	char aMagic[4];
+	if (!fread(&aMagic, sizeof(aMagic), 1, pFile))
+	{
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "magic='%s'", aMagic);
+		SendChatTarget(ClientID, aBuf);
+		err = 2; goto fail;
+	}
+	if (!IsFngMagic(aMagic, sizeof(aMagic)))
+	{
+		dbg_msg("stats", "file error magic missmatch '%s' != 'FNG'", aMagic);
+		err = 3; goto fail;
+	}
+	char aVersion[16];
+	str_copy(aVersion, FNG_VERSION, sizeof(aVersion));
+	if (!fread(&aVersion, sizeof(aVersion), 1, pFile))
+	{
+		err = 4; goto fail;
+	}
+	if (!IsFngVersion(aVersion, sizeof(aVersion)))
+	{
+		dbg_msg("stats", "file error version missmatch '%s' != '%s'", aVersion, FNG_VERSION);
+		err = 5; goto fail;
+	}
+	if (!fread(pStatsBuf, sizeof(*pStatsBuf), 1, pFile))
+	{
+		err = 6; goto fail;
+	}
+	fclose(pFile);
+	return 0;
+	fail:
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "[stats] load failed: file error=%d path='%s'", err, aFilePath);
+	if (err != 1) // expected error when stats do not exist yet
+		SendChatTarget(ClientID, aBuf);
+	return err;
 }
 
 void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
@@ -1639,7 +1892,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("cmdlist", pFullCmd))
 	{
-		SendChatTarget(ClientID, "commands: stats, cmdlist, help, info");
+		SendChatTarget(ClientID, "commands: stats, round, cmdlist, help, info");
 	}
 	else if(!str_comp_nocase("stats", pFullCmd))
 	{
@@ -1648,6 +1901,25 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	else if(!str_comp_nocase_num("stats ", pFullCmd, 6))
 	{
 		ShowStats(ClientID, pFullCmd+6);
+	}
+	else if(!str_comp_nocase("save", pFullCmd))
+	{
+		SaveStats(ClientID);
+	}
+	else if (!str_comp_nocase_num("round ", pFullCmd, 6))
+	{
+		ShowRoundStats(ClientID, pFullCmd+6);
+	}
+	else if (!str_comp_nocase("round", pFullCmd))
+	{
+		ShowRoundStats(ClientID, Server()->ClientName(ClientID));
+	}
+	else if(!str_comp_nocase_num("meta ", pFullCmd, 5))
+	{
+		if (Server()->IsAuthed(ClientID))
+			ShowStatsMeta(ClientID, pFullCmd+5);
+		else
+			SendChatTarget(ClientID, "missing permission.");
 	}
 	else
 	{
@@ -1665,6 +1937,17 @@ int CGameContext::GetCIDByName(const char *pName)
 			return i;
 	}
 	return -1;
+}
+
+void CGameContext::EndRound()
+{
+	SendChat(-1, CHAT_ALL, -1, "end match");
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i])
+			continue;
+		SaveStats(i);
+	}
 }
 
 const char *CGameContext::GameType() const { return m_pController && m_pController->GetGameType() ? m_pController->GetGameType() : ""; }

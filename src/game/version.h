@@ -7,6 +7,9 @@
 #define GAME_NETVERSION_HASH_FORCED "802f1be60a05665f"
 #define GAME_NETVERSION "0.7 " GAME_NETVERSION_HASH_FORCED
 #define CLIENT_VERSION 0x0703
-#define FNG_VERSION "1.2.0-dev"
+#define FNG_VERSION_LEN 16
+#define FNG_MAGIC_LEN 4
+static const char FNG_VERSION[FNG_VERSION_LEN] = "1.2.0-dev";
+static const char FNG_MAGIC[FNG_MAGIC_LEN] = "FNG";
 static const char GAME_RELEASE_VERSION[8] = "0.7.3.1";
 #endif

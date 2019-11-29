@@ -111,5 +111,6 @@ MACRO_CONFIG_INT(DbgResizable, dbg_resizable, 0, 0, 0, CFGFLAG_CLIENT, "Enables 
 // solofng
 
 MACRO_CONFIG_INT(SvFreezeDelay, sv_freeze_delay, 9, 1, 30, CFGFLAG_SERVER, "How many seconds the players will remain frozen")
+MACRO_CONFIG_STR(SvStatsPath, sv_stats_path, 512, "stats", CFGFLAG_SERVER, "path to solofng stats directory")
 
 #endif

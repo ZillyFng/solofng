@@ -1,10 +1,13 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+#include "stdio.h"
+#include <game/version.h>
 #include "entities/character.h"
 #include "entities/flag.h"
 #include "gamecontext.h"
 #include "gamecontroller.h"
+
 #include "player.h"
 
 
@@ -33,6 +36,11 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, bool Dummy, bool AsSpe
 	m_RespawnDisabled = GameServer()->m_pController->GetStartRespawnState();
 	m_DeadSpecMode = false;
 	m_Spawning = 0;
+
+	// solofng
+
+	m_InitedRoundStats = false;
+	m_JoinTime = time(NULL);
 }
 
 CPlayer::~CPlayer()
@@ -469,4 +477,101 @@ void CPlayer::TryRespawn()
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos);
+}
+
+// solofng
+
+void CPlayer::AddKills(int Kills)
+{
+	InitRoundStats();
+	m_RoundStats.m_Kills += Kills;
+}
+
+void CPlayer::AddDeaths(int Deaths)
+{
+	InitRoundStats();
+	m_RoundStats.m_Deaths += Deaths;
+}
+
+void CPlayer::AddShots(int Shots)
+{
+	InitRoundStats();
+	m_RoundStats.m_RifleShots += Shots;
+}
+
+void CPlayer::AddFreezes(int Freezes)
+{
+	InitRoundStats();
+	m_RoundStats.m_Freezes += Freezes;
+}
+
+void CPlayer::AddFrozen(int Frozen)
+{
+	InitRoundStats();
+	m_RoundStats.m_Frozen += Frozen;
+}
+
+void CPlayer::InitRoundStats()
+{
+	if (m_InitedRoundStats)
+		return;
+	m_InitedRoundStats = true;
+	dbg_msg("stats", "init round stats ClientID=%d", m_ClientID);
+	// mem_zero probably redundants all the explicit 0 intializations but what ever
+	mem_zero(&m_RoundStats, sizeof(m_RoundStats));
+	str_copy(m_RoundStats.m_aName, Server()->ClientName(m_ClientID), sizeof(m_RoundStats.m_aName));
+	str_copy(m_RoundStats.m_aClan, Server()->ClientClan(m_ClientID), sizeof(m_RoundStats.m_aClan));
+	Server()->GetClientAddr(GetCID(), m_RoundStats.m_aaIP[0], sizeof(m_RoundStats.m_aaIP[0]));
+
+	m_RoundStats.m_Kills = 0;
+	m_RoundStats.m_Deaths = 0;
+	m_RoundStats.m_RifleShots = 0;
+	m_RoundStats.m_Freezes = 0;
+	m_RoundStats.m_Frozen = 0;
+	m_RoundStats.m_Spree = 0;
+	m_RoundStats.m_SpreeBest = 0;
+	m_RoundStats.m_Multi = 0;
+	m_RoundStats.m_MultiBest = 0;
+	for (int i = 0; i < MAX_MULTIS; i++)
+	{
+		m_RoundStats.m_aMultis[i] = 0;
+	}
+	m_RoundStats.m_FirstSeen = 0;
+	m_RoundStats.m_LastSeen = time(NULL);
+}
+
+bool CPlayer::SaveStats(const char *pFilePath)
+{
+	InitRoundStats();
+	CFngStats *pMergeStats;
+	CFngStats FileStats;
+	m_RoundStats.m_TotalOnlineTime = time(NULL) - m_JoinTime;
+	bool HasStast = GameServer()->LoadStats(m_ClientID, Server()->ClientName(m_ClientID), &FileStats) == 0;
+	if (!HasStast)
+	{
+		// just write round stats to file
+		m_RoundStats.m_FirstSeen = time(NULL);
+		pMergeStats = &m_RoundStats;
+	}
+	else
+	{
+		GameServer()->MergeStats(&m_RoundStats, &FileStats);
+		pMergeStats = &FileStats;
+	}
+
+	FILE *pFile;
+	pFile = fopen(pFilePath, "wb");
+	if(!pFile)
+	{
+		GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file open.");
+		return false;
+	}
+	fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
+	fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
+	fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
+	fclose(pFile);
+	dbg_msg("stats", "saved ClientID=%d to file '%s' (%s)", m_ClientID, pFilePath, HasStast ? "merge" : "new");
+	m_InitedRoundStats = false;
+	InitRoundStats(); // Refresh/Delete round stats
+	return true;
 }

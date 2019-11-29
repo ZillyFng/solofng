@@ -389,6 +389,7 @@ void CCharacter::FireWeapon()
 		{
 			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID());
 			GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE);
+			m_pPlayer->AddShots();
 		} break;
 
 		case WEAPON_NINJA:
@@ -671,12 +672,14 @@ void CCharacter::Die(int Killer, int Weapon)
 			if (pKiller)
 			{
 				pKiller->m_Score += 3;
+				pKiller->AddKills();
 			}
 			else
 			{
 				// maybe set it to own id idk what -1 actually means
 				Killer = -1;
 			}
+			m_pPlayer->AddDeaths();
 		}
 		else
 		{
@@ -745,7 +748,9 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 		if(pKiller)
 		{
 			pKiller->m_Score++;
+			pKiller->AddFreezes();
 		}
+		m_pPlayer->AddFrozen();
 		Freeze();
 		// send the kill message
 		CNetMsg_Sv_KillMsg Msg;
