@@ -1780,13 +1780,8 @@ bool CGameContext::SaveStats(int ClientID)
 	CPlayer *pPlayer = m_apPlayers[ClientID];
 	if (!pPlayer)
 		return false;
-	if (str_find(Server()->ClientName(ClientID), "."))
-	{
-		SendChatTarget(ClientID, "[stats] save failed: invalid name.");
-		return false;
-	}
 	char aFilename[1024];
-	if (escape_url(aFilename, sizeof(aFilename), Server()->ClientName(ClientID)))
+	if (escape_filename(aFilename, sizeof(aFilename), Server()->ClientName(ClientID)))
 	{
 		SendChatTarget(ClientID, "[stats] save failed: escape error.");
 		return false;
@@ -1823,13 +1818,8 @@ bool CGameContext::IsFngVersion(const char *pVersion, int Size)
 int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBuf)
 {
 	int err = 0;
-	if (str_find(pName, "."))
-	{
-		SendChatTarget(ClientID, "[stats] load failed: invalid name.");
-		return -1;
-	}
 	char aFilename[1024];
-	if (escape_url(aFilename, sizeof(aFilename), pName))
+	if (escape_filename(aFilename, sizeof(aFilename), pName))
 	{
 		SendChatTarget(ClientID, "[stats] load failed: escape error.");
 		return -2;

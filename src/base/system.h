@@ -1636,8 +1636,8 @@ int pid();
 // solofng
 
 /*
-	Function: escape_url
-		Performs curl_easy_escape on buffer
+	Function: escape_filename
+		Performs curl_easy_escape on buffer + chiller magic
 
 	Parameters:
 		buf - buffer where the escaped string gets written to
@@ -1647,8 +1647,17 @@ int pid();
 	Returns:
 		0 - ok
 		1 - error
+
+	Remarks:
+		Also escapes . and ~ custom edit by ChillerDragon
 */
-int escape_url(char *buf, int buf_len, const char *str);
+int escape_filename(char *buf, int buf_len, const char *str);
+
+// full credits go to https://stackoverflow.com/a/779960
+char *str_replace_malloc(char *orig, char *rep, char *with);
+
+// my super useful wrapper xxD ( UNTESTED )
+void str_replace(const char *orig, int orig_size, const char *rep, int rep_size, const char *with, int with_size, char *buf, int buf_size);
 
 #ifdef __cplusplus
 }
