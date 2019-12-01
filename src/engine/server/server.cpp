@@ -1329,6 +1329,19 @@ void CServer::InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterS
 	m_Register.Init(pNetServer, pMasterServer, pConsole);
 }
 
+#include "signal.h"
+#include "stdio.h"
+#include "stdlib.h"
+
+static class IGameServer *sp_GameServer;
+
+static void OnCrash(int sig)
+{
+	printf("[stats] caught signal=%d saving stats...\n", sig);
+	sp_GameServer->EndRound();
+	exit(0); // TODO: should probably not exit with ok
+}
+
 int CServer::Run()
 {
 	//
@@ -1385,6 +1398,13 @@ int CServer::Run()
 	{
 		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", "WARNING: netversion hash differs");
 	}
+
+	sp_GameServer = GameServer();
+	signal(SIGINT, OnCrash);
+	signal(SIGILL, OnCrash);
+	signal(SIGSEGV, OnCrash);
+	signal(SIGFPE, OnCrash);
+	signal(SIGABRT, OnCrash);
 
 	// process pending commands
 	m_pConsole->StoreCommands(false);

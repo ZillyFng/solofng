@@ -101,6 +101,10 @@ public:
 	virtual const char *NetVersion() const = 0;
 	virtual const char *NetVersionHashUsed() const = 0;
 	virtual const char *NetVersionHashReal() const = 0;
+
+	// solofng
+
+	virtual void EndRound() = 0;
 };
 
 extern IGameServer *CreateGameServer();
