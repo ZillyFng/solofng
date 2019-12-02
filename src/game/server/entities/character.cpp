@@ -683,8 +683,8 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 		Killer = -1;
 		return;
 	}
-	pKiller->m_Score += 3;
 	pKiller->AddKills();
+	pKiller->m_Score += 3;
 	if (Spike == WEAPON_SPIKE_GOLD)
 	{
 		pKiller->m_Score += 5; // 8 total

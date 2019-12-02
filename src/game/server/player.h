@@ -158,6 +158,7 @@ public:
 	void AddGreenSpikes(int Spikes = 1);
 	void AddPurpleSpikes(int Spikes = 1);
 	void AddShots(int Shots = 1);
+	time_t HandleMulti();
 	void AddFreezes(int Freezes = 1);
 	void AddFrozen(int Frozen = 1);
 };

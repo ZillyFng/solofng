@@ -485,6 +485,7 @@ void CPlayer::AddKills(int Kills)
 {
 	InitRoundStats();
 	m_RoundStats.m_Kills += Kills;
+	m_RoundStats.m_LastKillTime = HandleMulti();
 }
 
 void CPlayer::AddDeaths(int Deaths)
@@ -515,6 +516,29 @@ void CPlayer::AddShots(int Shots)
 {
 	InitRoundStats();
 	m_RoundStats.m_RifleShots += Shots;
+}
+
+time_t CPlayer::HandleMulti()
+{
+	InitRoundStats();
+	// full credits go to onbgy
+	// https://github.com/nobody-mb/teeworlds-fng2-mod/blob/master/src/game/server/stats.cpp#L685
+	time_t ttmp = time(NULL);
+	if ((ttmp - m_RoundStats.m_LastKillTime) > 5)
+	{
+		m_RoundStats.m_Multi = 1;
+		return ttmp;
+	}
+	m_RoundStats.m_Multi++;
+	if (m_RoundStats.m_MultiBest < m_RoundStats.m_Multi)
+		m_RoundStats.m_MultiBest = m_RoundStats.m_Multi;
+	int index = m_RoundStats.m_Multi - 2;
+	m_RoundStats.m_aMultis[index > MAX_MULTIS ? MAX_MULTIS : index]++;
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "'%s' multi x%d!",
+		Server()->ClientName(m_ClientID), m_RoundStats.m_Multi);
+	GameServer()->SendChat(-1, CHAT_ALL, -1, aBuf);
+	return ttmp;
 }
 
 void CPlayer::AddFreezes(int Freezes)
@@ -551,6 +575,7 @@ void CPlayer::InitRoundStats()
 	m_RoundStats.m_Frozen = 0;
 	m_RoundStats.m_Spree = 0;
 	m_RoundStats.m_SpreeBest = 0;
+	m_RoundStats.m_LastKillTime = 0;
 	m_RoundStats.m_Multi = 0;
 	m_RoundStats.m_MultiBest = 0;
 	for (int i = 0; i < MAX_MULTIS; i++)
