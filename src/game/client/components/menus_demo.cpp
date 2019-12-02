@@ -100,7 +100,7 @@ void CMenus::RenderDemoPlayer(CUIRect MainView)
 		// draw filled bar
 		float Amount = CurrentTick/(float)TotalTicks;
 		CUIRect FilledBar = SeekBar;
-		FilledBar.w = max(2*Rounding, FilledBar.w*Amount);
+		FilledBar.w = maximum(2*Rounding, FilledBar.w*Amount);
 		RenderTools()->DrawUIRect(&FilledBar, vec4(1,1,1,0.5f), CUI::CORNER_ALL, Rounding);
 
 		// draw markers

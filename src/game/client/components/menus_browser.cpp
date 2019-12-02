@@ -1667,7 +1667,7 @@ void CMenus::RenderServerbrowserFilterTab(CUIRect View)
 	}
 	static float s_ScrollValue = 0.0f;
 	bool NeedScrollbar = (Button.w - Length) < 0.0f;
-	Button.x += min(0.0f, Button.w - Length) * s_ScrollValue;
+	Button.x += minimum(0.0f, Button.w - Length) * s_ScrollValue;
 	for(int i = 0; i < CServerFilterInfo::MAX_GAMETYPES; ++i)
 	{
 		if(FilterInfo.m_aGametype[i][0])

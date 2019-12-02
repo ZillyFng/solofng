@@ -663,7 +663,7 @@ public:
 			const char *pBatchEnd = pEnd;
 			if(pCursor->m_LineWidth > 0 && !(pCursor->m_Flags&TEXTFLAG_STOP_AT_END))
 			{
-				int Wlen = min(WordLength((char *)pCurrent), (int)(pEnd-pCurrent));
+				int Wlen = minimum(WordLength((char *)pCurrent), (int)(pEnd-pCurrent));
 				CTextCursor Compare = *pCursor;
 				Compare.m_X = DrawX;
 				Compare.m_Y = DrawY;
@@ -854,7 +854,7 @@ public:
 				const char *pBatchEnd = pEnd;
 				if(pCursor->m_LineWidth > 0 && !(pCursor->m_Flags&TEXTFLAG_STOP_AT_END))
 				{
-					int Wlen = min(WordLength((char *)pCurrent), (int)(pEnd-pCurrent));
+					int Wlen = minimum(WordLength((char *)pCurrent), (int)(pEnd-pCurrent));
 					CTextCursor Compare = *pCursor;
 					Compare.m_X = DrawX;
 					Compare.m_Y = DrawY;

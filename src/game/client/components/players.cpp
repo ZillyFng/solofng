@@ -380,7 +380,7 @@ void CPlayers::RenderPlayer(
 				if (Phase1Tick < (g_pData->m_Weapons.m_aId[iw].m_Muzzleduration + 3))
 				{
 					float t = ((((float)Phase1Tick) + IntraTick)/(float)g_pData->m_Weapons.m_aId[iw].m_Muzzleduration);
-					Alpha = mix(2.0f, 0.0f, min(1.0f,max(0.0f,t)));
+					Alpha = mix(2.0f, 0.0f, minimum(1.0f,maximum(0.0f,t)));
 				}
 
 				int IteX = random_int() % g_pData->m_Weapons.m_aId[iw].m_NumSpriteMuzzles;

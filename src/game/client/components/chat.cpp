@@ -838,7 +838,7 @@ void CChat::OnRender()
 		if(m_InputUpdate)
 		{
 			if(m_ChatStringOffset > 0 && m_Input.GetLength() < m_OldChatStringLength)
-				m_ChatStringOffset = max(0, m_ChatStringOffset-(m_OldChatStringLength-m_Input.GetLength()));
+				m_ChatStringOffset = maximum(0, m_ChatStringOffset-(m_OldChatStringLength-m_Input.GetLength()));
 
 			if(m_ChatStringOffset > m_Input.GetCursorOffset())
 				m_ChatStringOffset -= m_ChatStringOffset-m_Input.GetCursorOffset();
@@ -936,8 +936,8 @@ void CChat::OnRender()
 	if(IsScoreboardActive)
 	{
 		// calculate chat area (height gets a penalty as long lines are better to read)
-		float ReducedLineWidth = min(ScoreboardRectFixed.x - 5.0f - x, LineWidth);
-		float ReducedHeightLimit = max(ScoreboardRectFixed.y+ScoreboardRectFixed.h+5.0f, HeightLimit);
+		float ReducedLineWidth = minimum(ScoreboardRectFixed.x - 5.0f - x, LineWidth);
+		float ReducedHeightLimit = maximum(ScoreboardRectFixed.y+ScoreboardRectFixed.h+5.0f, HeightLimit);
 		float Area1 = ReducedLineWidth * ((Height-HeightLimit) * 0.5f);
 		float Area2 = LineWidth * ((Height-ReducedHeightLimit) * 0.5f);
 

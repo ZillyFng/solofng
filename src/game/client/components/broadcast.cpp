@@ -60,7 +60,7 @@ void CBroadcast::RenderServerBroadcast()
 
 	Graphics()->MapScreen(0, 0, Width, Height);
 
-	const float Fade = 1.0f - max(0.0f, (DeltaTime - DisplayStartFade) / (DisplayDuration - DisplayStartFade));
+	const float Fade = 1.0f - maximum(0.0f, (DeltaTime - DisplayStartFade) / (DisplayDuration - DisplayStartFade));
 
 	CUIRect ScreenRect = {0, 0, Width, Height};
 
@@ -187,7 +187,7 @@ void CBroadcast::RenderServerBroadcast()
 					else if(StartColorID >= 0)
 					{
 						ColorStrLen = m_aSrvBroadcastColorList[j].m_CharPos -
-									  max(m_aSrvBroadcastColorList[StartColorID].m_CharPos, ThisCharPos);
+									  maximum(m_aSrvBroadcastColorList[StartColorID].m_CharPos, ThisCharPos);
 						break;
 					}
 				}
@@ -196,7 +196,7 @@ void CBroadcast::RenderServerBroadcast()
 
 				if(ColorStrLen < 0)
 					ColorStrLen = Line.m_StrLen-DrawnStrLen;
-				ColorStrLen = min(ColorStrLen, Line.m_StrLen-DrawnStrLen);
+				ColorStrLen = minimum(ColorStrLen, Line.m_StrLen-DrawnStrLen);
 
 				const CBcColor& TextColor = m_aSrvBroadcastColorList[StartColorID];
 				float r = TextColor.m_R/255.f;
@@ -361,7 +361,7 @@ void CBroadcast::OnMessage(int MsgType, void* pRawMsg)
 			TextRender()->TextEx(&Cursor, pBroadcastMsg, MsgLen);
 
 			// can't fit on one line, reduce size
-			Cursor.m_LineCount = min(Cursor.m_LineCount, (int)MAX_BROADCAST_LINES);
+			Cursor.m_LineCount = minimum(Cursor.m_LineCount, (int)MAX_BROADCAST_LINES);
 			FontSize = mix(BROADCAST_FONTSIZE_BIG, BROADCAST_FONTSIZE_SMALL,
 						   Cursor.m_LineCount/(float)MAX_BROADCAST_LINES);
 

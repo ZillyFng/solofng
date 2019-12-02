@@ -232,7 +232,7 @@ void CControls::ClampMousePos()
 		{
 			float CameraMaxDistance = 200.0f;
 			float FollowFactor = g_Config.m_ClMouseFollowfactor/100.0f;
-			MouseMax = min(CameraMaxDistance/FollowFactor + g_Config.m_ClMouseDeadzone, (float)g_Config.m_ClMouseMaxDistanceDynamic);
+			MouseMax = minimum(CameraMaxDistance/FollowFactor + g_Config.m_ClMouseDeadzone, (float)g_Config.m_ClMouseMaxDistanceDynamic);
 		}
 		else
 			MouseMax = (float)g_Config.m_ClMouseMaxDistanceStatic;

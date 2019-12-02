@@ -99,7 +99,7 @@ float CMenus::ButtonFade(CButtonContainer *pBC, float Seconds, int Checked)
 		return Seconds;
 	}
 
-	return max(0.0f, pBC->m_FadeStartTime -  Client()->LocalTime() + Seconds);
+	return maximum(0.0f, pBC->m_FadeStartTime -  Client()->LocalTime() + Seconds);
 }
 
 int CMenus::DoIcon(int ImageId, int SpriteId, const CUIRect *pRect)
@@ -491,20 +491,20 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 			// do scrolling
 			if(UI()->MouseX() < pRect->x && s_ScrollStart-UI()->MouseX() > 10.0f)
 			{
-				s_AtIndex = max(0, s_AtIndex-1);
+				s_AtIndex = maximum(0, s_AtIndex-1);
 				s_ScrollStart = UI()->MouseX();
 				UpdateOffset = true;
 			}
 			else if(UI()->MouseX() > pRect->x+pRect->w && UI()->MouseX()-s_ScrollStart > 10.0f)
 			{
-				s_AtIndex = min(Len, s_AtIndex+1);
+				s_AtIndex = minimum(Len, s_AtIndex+1);
 				s_ScrollStart = UI()->MouseX();
 				UpdateOffset = true;
 			}
 		}
 		else if(!Inside && UI()->MouseButton(0))
 		{
-			s_AtIndex = min(s_AtIndex, str_length(pStr));
+			s_AtIndex = minimum(s_AtIndex, str_length(pStr));
 			s_DoScroll = false;
 			UI()->SetActiveItem(0);
 			UI()->ClearLastActiveItem();
@@ -527,7 +527,7 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 	{
 		if(!UI()->MouseButton(0))
 		{
-			s_AtIndex = min(s_AtIndex, str_length(pStr));
+			s_AtIndex = minimum(s_AtIndex, str_length(pStr));
 			s_DoScroll = false;
 			UI()->SetActiveItem(0);
 		}
@@ -581,7 +581,7 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 			float wt = TextRender()->TextWidth(0, FontSize, pDisplayStr, -1, -1.0f);
 			do
 			{
-				*pOffset += min(wt-*pOffset-Textbox.w, Textbox.w/3);
+				*pOffset += minimum(wt-*pOffset-Textbox.w, Textbox.w/3);
 			}
 			while(w-*pOffset > Textbox.w);
 		}
@@ -590,7 +590,7 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 			// move to the right
 			do
 			{
-				*pOffset = max(0.0f, *pOffset-Textbox.w/3);
+				*pOffset = maximum(0.0f, *pOffset-Textbox.w/3);
 			}
 			while(w-*pOffset < 0.0f);
 		}
@@ -657,7 +657,7 @@ void CMenus::DoScrollbarOption(void *pID, int *pOption, const CUIRect *pRect, co
 	else
 		str_format(aBuf, sizeof(aBuf), "%s: \xe2\x88\x9e", pStr);
 	float FontSize = pRect->h*ms_FontmodHeight*0.8f;
-	float VSplitVal = max(TextRender()->TextWidth(0, FontSize, aBuf, -1, -1.0f), TextRender()->TextWidth(0, FontSize, aBufMax, -1, -1.0f));
+	float VSplitVal = maximum(TextRender()->TextWidth(0, FontSize, aBuf, -1, -1.0f), TextRender()->TextWidth(0, FontSize, aBufMax, -1, -1.0f));
 
 	pRect->VSplitLeft(pRect->h+10.0f+VSplitVal, &Label, &ScrollBar);
 	Label.VSplitLeft(Label.h+5.0f, 0, &Label);
@@ -2036,7 +2036,7 @@ int CMenus::Render()
 				UI()->DoLabel(&Part, aBuf, ButtonHeight*ms_FontmodHeight*0.8f, CUI::ALIGN_CENTER);
 
 				// time left
-				int SecondsLeft = max(1, m_DownloadSpeed > 0.0f ? static_cast<int>((Client()->MapDownloadTotalsize()-Client()->MapDownloadAmount())/m_DownloadSpeed) : 1);
+				int SecondsLeft = maximum(1, m_DownloadSpeed > 0.0f ? static_cast<int>((Client()->MapDownloadTotalsize()-Client()->MapDownloadAmount())/m_DownloadSpeed) : 1);
 				if(SecondsLeft >= 60)
 				{
 					int MinutesLeft = SecondsLeft / 60;
@@ -2055,7 +2055,7 @@ int CMenus::Render()
 				Box.HSplitTop(ButtonHeight, &Part, &Box);
 				Part.VMargin(40.0f, &Part);
 				RenderTools()->DrawUIRect(&Part, vec4(1.0f, 1.0f, 1.0f, 0.25f), CUI::CORNER_ALL, 5.0f);
-				Part.w = max(10.0f, (Part.w*Client()->MapDownloadAmount())/Client()->MapDownloadTotalsize());
+				Part.w = maximum(10.0f, (Part.w*Client()->MapDownloadAmount())/Client()->MapDownloadTotalsize());
 				RenderTools()->DrawUIRect(&Part, vec4(1.0f, 1.0f, 1.0f, 0.5f), CUI::CORNER_ALL, 5.0f);
 			}
 			else
@@ -2830,7 +2830,7 @@ void CMenus::EndScrollRegion(CScrollRegion* pSr)
 			pSr->m_ScrollY += pSr->m_Params.m_ScrollSpeed;
 	}
 
-	const float SliderHeight = max(pSr->m_Params.m_SliderMinHeight,
+	const float SliderHeight = maximum(pSr->m_Params.m_SliderMinHeight,
 		pSr->m_ClipRect.h/pSr->m_ContentH * pSr->m_RailRect.h);
 
 	CUIRect Slider = pSr->m_RailRect;
@@ -2895,12 +2895,12 @@ void CMenus::ScrollRegionAddRect(CScrollRegion* pSr, CUIRect Rect)
 	ContentPos.x += pSr->m_ContentScrollOff.x;
 	ContentPos.y += pSr->m_ContentScrollOff.y;
 	pSr->m_LastAddedRect = Rect;
-	pSr->m_ContentH = max(Rect.y + Rect.h - ContentPos.y, pSr->m_ContentH);
+	pSr->m_ContentH = maximum(Rect.y + Rect.h - ContentPos.y, pSr->m_ContentH);
 }
 
 void CMenus::ScrollRegionScrollHere(CScrollRegion* pSr, int Option)
 {
-	const float MinHeight = min(pSr->m_ClipRect.h, pSr->m_LastAddedRect.h);
+	const float MinHeight = minimum(pSr->m_ClipRect.h, pSr->m_LastAddedRect.h);
 	const float TopScroll = pSr->m_LastAddedRect.y -
 		(pSr->m_ClipRect.y + pSr->m_ContentScrollOff.y);
 

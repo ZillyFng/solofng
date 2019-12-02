@@ -1135,7 +1135,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket)
 			if(!m_MapdownloadFile)
 				return;
 
-			int Size = min(m_MapDownloadChunkSize, m_MapdownloadTotalsize-m_MapdownloadAmount);
+			int Size = minimum(m_MapDownloadChunkSize, m_MapdownloadTotalsize-m_MapdownloadAmount);
 			const unsigned char *pData = Unpacker.GetRaw(Size);
 			if(Unpacker.Error())
 				return;

@@ -292,7 +292,7 @@ void CMenus::RenderHSLPicker(CUIRect MainView)
 			Button.VSplitLeft(Button.h, &Button, &Bar);
 			if(DoButton_Menu(&s_aButtons[i*3], "<", 0, &Button, 0, CUI::CORNER_TL|CUI::CORNER_BL))
 			{
-				*apVars[i] = max(0, *apVars[i]-1);
+				*apVars[i] = maximum(0, *apVars[i]-1);
 				Modified = true;
 			}
 
@@ -371,7 +371,7 @@ void CMenus::RenderHSLPicker(CUIRect MainView)
 
 			// bar marker
 			Graphics()->SetColor(0.0f, 0.0f, 0.0f, 1.0f);
-			IGraphics::CQuadItem QuadItem(Bar.x + min(127.0f, *apVars[i]/2.0f), Bar.y, UI()->PixelSize(), Bar.h);
+			IGraphics::CQuadItem QuadItem(Bar.x + minimum(127.0f, *apVars[i]/2.0f), Bar.y, UI()->PixelSize(), Bar.h);
 			Graphics()->QuadsDrawTL(&QuadItem, 1);
 			Graphics()->QuadsEnd();
 
@@ -379,7 +379,7 @@ void CMenus::RenderHSLPicker(CUIRect MainView)
 			Button.VSplitLeft(Button.h, &Button, &Label);
 			if(DoButton_Menu(&s_aButtons[i*3+1], ">", 0, &Button, 0, CUI::CORNER_TR|CUI::CORNER_BR))
 			{
-				*apVars[i] = min(255, *apVars[i]+1);
+				*apVars[i] = minimum(255, *apVars[i]+1);
 				Modified = true;
 			}
 
@@ -934,7 +934,7 @@ void CMenus::RenderSettingsGeneral(CUIRect MainView)
 	BottomView.HSplitTop(20.f, 0, &BottomView);
 
 	// render game menu backgrounds
-	int NumOptions = max(g_Config.m_ClNameplates ? 6 : 3, g_Config.m_ClShowsocial ? 5 : 4);
+	int NumOptions = maximum(g_Config.m_ClNameplates ? 6 : 3, g_Config.m_ClShowsocial ? 5 : 4);
 	float ButtonHeight = 20.0f;
 	float Spacing = 2.0f;
 	float BackgroundHeight = (float)(NumOptions+1)*ButtonHeight+(float)NumOptions*Spacing;

@@ -159,7 +159,7 @@ void CHud::RenderScoreHud()
 			str_format(aScoreTeam[TEAM_RED], sizeof(aScoreTeam)/2, "%d", m_pClient->m_Snap.m_pGameDataTeam->m_TeamscoreRed);
 			str_format(aScoreTeam[TEAM_BLUE], sizeof(aScoreTeam)/2, "%d", m_pClient->m_Snap.m_pGameDataTeam->m_TeamscoreBlue);
 			float aScoreTeamWidth[2] = { TextRender()->TextWidth(0, 14.0f, aScoreTeam[TEAM_RED], -1, -1.0f), TextRender()->TextWidth(0, 14.0f, aScoreTeam[TEAM_BLUE], -1, -1.0f) };
-			float ScoreWidthMax = max(max(aScoreTeamWidth[TEAM_RED], aScoreTeamWidth[TEAM_BLUE]), TextRender()->TextWidth(0, 14.0f, "100", -1, -1.0f));
+			float ScoreWidthMax = maximum(maximum(aScoreTeamWidth[TEAM_RED], aScoreTeamWidth[TEAM_BLUE]), TextRender()->TextWidth(0, 14.0f, "100", -1, -1.0f));
 			float Split = 3.0f;
 			float ImageSize = GameFlags&GAMEFLAG_FLAGS ? 16.0f : Split;
 
@@ -180,7 +180,7 @@ void CHud::RenderScoreHud()
 					str_format(aBuf, sizeof(aBuf), m_pClient->m_Snap.m_AliveCount[t]==1 ? Localize("%d player left") : Localize("%d players left"),
 								m_pClient->m_Snap.m_AliveCount[t]);
 					float w = TextRender()->TextWidth(0, 8.0f, aBuf, -1, -1.0f);
-					TextRender()->Text(0, min(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split), StartY+(t+1)*20.0f-3.0f, 8.0f, aBuf, -1.0f);
+					TextRender()->Text(0, minimum(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split), StartY+(t+1)*20.0f-3.0f, 8.0f, aBuf, -1.0f);
 				}
 				StartY += 8.0f;
 			}
@@ -214,7 +214,7 @@ void CHud::RenderScoreHud()
 						float w = TextRender()->TextWidth(0, 8.0f, aName, -1, -1.0f) + RenderTools()->GetClientIdRectSize(8.0f);
 
 						CTextCursor Cursor;
-						float x = min(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split);
+						float x = minimum(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split);
 						float y = StartY+(t+1)*20.0f-3.0f;
 						TextRender()->SetCursor(&Cursor, x, y, 8.0f, TEXTFLAG_RENDER);
 
@@ -271,7 +271,7 @@ void CHud::RenderScoreHud()
 					aScore[t][0] = 0;
 			}
 			float aScoreWidth[2] = {TextRender()->TextWidth(0, 14.0f, aScore[0], -1, -1.0f), TextRender()->TextWidth(0, 14.0f, aScore[1], -1, -1.0f)};
-			float ScoreWidthMax = max(max(aScoreWidth[0], aScoreWidth[1]), TextRender()->TextWidth(0, 14.0f, "10", -1, -1.0f));
+			float ScoreWidthMax = maximum(maximum(aScoreWidth[0], aScoreWidth[1]), TextRender()->TextWidth(0, 14.0f, "10", -1, -1.0f));
 			float Split = 3.0f, ImageSize = 16.0f, PosSize = 16.0f;
 
 			// todo: add core hud for LMS
@@ -295,7 +295,7 @@ void CHud::RenderScoreHud()
 					float w = TextRender()->TextWidth(0, 8.0f, aName, -1, -1.0f) + RenderTools()->GetClientIdRectSize(8.0f);
 
 					CTextCursor Cursor;
-					float x = min(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split-PosSize);
+					float x = minimum(Whole-w-1.0f, Whole-ScoreWidthMax-ImageSize-2*Split-PosSize);
 					float y = StartY+(t+1)*20.0f-3.0f;
 					TextRender()->SetCursor(&Cursor, x, y, 8.0f, TEXTFLAG_RENDER);
 
@@ -582,12 +582,12 @@ void CHud::RenderHealthAndAmmo(const CNetObj_Character *pCharacter)
 		RenderTools()->SelectSprite(g_pData->m_Weapons.m_aId[pCharacter->m_Weapon%NUM_WEAPONS].m_pSpriteProj);
 		if(pCharacter->m_Weapon == WEAPON_GRENADE)
 		{
-			for(i = 0; i < min(pCharacter->m_AmmoCount, 10); i++)
+			for(i = 0; i < minimum(pCharacter->m_AmmoCount, 10); i++)
 				Array[i] = IGraphics::CQuadItem(x+1+i*12, y+24, 10, 10);
 		}
 		else
 		{
-			for(i = 0; i < min(pCharacter->m_AmmoCount, 10); i++)
+			for(i = 0; i < minimum(pCharacter->m_AmmoCount, 10); i++)
 				Array[i] = IGraphics::CQuadItem(x+i*12, y+24, 12, 12);
 		}
 		Graphics()->QuadsDrawTL(Array, i);
@@ -597,7 +597,7 @@ void CHud::RenderHealthAndAmmo(const CNetObj_Character *pCharacter)
 
 	// render health
 	RenderTools()->SelectSprite(SPRITE_HEALTH_FULL);
-	for(; h < min(pCharacter->m_Health, 10); h++)
+	for(; h < minimum(pCharacter->m_Health, 10); h++)
 		Array[h] = IGraphics::CQuadItem(x+h*12,y,12,12);
 	Graphics()->QuadsDrawTL(Array, h);
 
@@ -610,7 +610,7 @@ void CHud::RenderHealthAndAmmo(const CNetObj_Character *pCharacter)
 	// render armor meter
 	h = 0;
 	RenderTools()->SelectSprite(SPRITE_ARMOR_FULL);
-	for(; h < min(pCharacter->m_Armor, 10); h++)
+	for(; h < minimum(pCharacter->m_Armor, 10); h++)
 		Array[h] = IGraphics::CQuadItem(x+h*12,y+12,12,12);
 	Graphics()->QuadsDrawTL(Array, h);
 
