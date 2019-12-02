@@ -493,6 +493,24 @@ void CPlayer::AddDeaths(int Deaths)
 	m_RoundStats.m_Deaths += Deaths;
 }
 
+void CPlayer::AddGoldSpikes(int Spikes)
+{
+	InitRoundStats();
+	m_RoundStats.m_GoldSpikes += Spikes;
+}
+
+void CPlayer::AddGreenSpikes(int Spikes)
+{
+	InitRoundStats();
+	m_RoundStats.m_GreenSpikes += Spikes;
+}
+
+void CPlayer::AddPurpleSpikes(int Spikes)
+{
+	InitRoundStats();
+	m_RoundStats.m_PurpleSpikes += Spikes;
+}
+
 void CPlayer::AddShots(int Shots)
 {
 	InitRoundStats();

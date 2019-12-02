@@ -660,32 +660,51 @@ bool CCharacter::IncreaseArmor(int Amount)
 	return true;
 }
 
+void CCharacter::FngSacrafice(int& Killer, int& Spike)
+{
+	if (Spike != WEAPON_SPIKE_NORMAL &&
+		Spike != WEAPON_SPIKE_GOLD &&
+		Spike != WEAPON_SPIKE_GREEN &&
+		Spike != WEAPON_SPIKE_PURPLE)
+		return;
+
+	if (m_LastToucherID == -1 || !m_FreezeTime)
+	{
+		Spike = WEAPON_WORLD;
+		return;
+	}
+	m_pPlayer->AddDeaths();
+	Spike = WEAPON_NINJA;
+	Killer = m_LastToucherID;
+	CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
+	if (!pKiller)
+	{
+		// maybe set it to own id idk what -1 actually means
+		Killer = -1;
+		return;
+	}
+	pKiller->m_Score += 3;
+	pKiller->AddKills();
+	if (Spike == WEAPON_SPIKE_GOLD)
+	{
+		pKiller->m_Score += 5; // 8 total
+		pKiller->AddGoldSpikes();
+	}
+	else if (Spike == WEAPON_SPIKE_GREEN)
+	{
+		pKiller->m_Score += 3; // 6 total
+		pKiller->AddGreenSpikes();
+	}
+	else if (Spike == WEAPON_SPIKE_PURPLE)
+	{
+		pKiller->m_Score += 7; // 10 total
+		pKiller->AddPurpleSpikes();
+	}
+}
+
 void CCharacter::Die(int Killer, int Weapon)
 {
-	if (Weapon == WEAPON_SPIKE_NORMAL)
-	{
-		if (m_LastToucherID != -1 && m_FreezeTime)
-		{
-			Weapon = WEAPON_NINJA;
-			Killer = m_LastToucherID;
-			CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
-			if (pKiller)
-			{
-				pKiller->m_Score += 3;
-				pKiller->AddKills();
-			}
-			else
-			{
-				// maybe set it to own id idk what -1 actually means
-				Killer = -1;
-			}
-			m_pPlayer->AddDeaths();
-		}
-		else
-		{
-			Weapon = WEAPON_WORLD;
-		}
-	}
+	FngSacrafice(Killer, Weapon);
 	// we got to wait 0.5 secs before respawning
 	m_Alive = false;
 	m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
@@ -978,8 +997,13 @@ void CCharacter::HandleTiles(int Index)
 	m_Tile3 = GameServer()->Collision()->GetTileIndex(m_S3);
 	m_Tile4 = GameServer()->Collision()->GetTileIndex(m_S4);
 
+	// negative spike indecies are spike weapons
 	if(IsTile(TILE_SPIKE_NORMAL))
-	{
-		Die(m_pPlayer->GetCID(), WEAPON_SPIKE_NORMAL);
-	}
+		Die(m_pPlayer->GetCID(), -TILE_SPIKE_NORMAL);
+	else if(IsTile(TILE_SPIKE_GOLD))
+		Die(m_pPlayer->GetCID(), -TILE_SPIKE_GOLD);
+	else if(IsTile(TILE_SPIKE_GREEN))
+		Die(m_pPlayer->GetCID(), -TILE_SPIKE_GREEN);
+	else if(IsTile(TILE_SPIKE_PURPLE))
+		Die(m_pPlayer->GetCID(), -TILE_SPIKE_PURPLE);
 }

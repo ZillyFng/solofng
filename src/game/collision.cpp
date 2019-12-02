@@ -49,6 +49,8 @@ void CCollision::Init(class CLayers *pLayers)
 		case TILE_SPIKE_NORMAL:
 		case TILE_SPIKE_RED:
 		case TILE_SPIKE_BLUE:
+		case TILE_SPIKE_GREEN:
+		case TILE_SPIKE_PURPLE:
 			m_pTiles[i].m_Index = Index;
 			break;
 		default:

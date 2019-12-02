@@ -128,6 +128,7 @@ private:
 
 	// solofng
 
+	void FngSacrafice(int& Killer, int& Spike);
 	int m_LastToucherID;
 	void SolofngTick();
 	void SolofngPostCoreTick();

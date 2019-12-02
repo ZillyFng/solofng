@@ -9,9 +9,11 @@
 enum
 {
 	WEAPON_SPIKE_GOLD = -7,
-	WEAPON_SPIKE_NORMAL = -6,
-	WEAPON_SPIKE_RED = -5,
-	WEAPON_SPIKE_BLUE = -4,
+	WEAPON_SPIKE_NORMAL = -8,
+	WEAPON_SPIKE_RED = -9,
+	WEAPON_SPIKE_BLUE = -10,
+	WEAPON_SPIKE_GREEN = -14,
+	WEAPON_SPIKE_PURPLE = -15,
 
 	WEAPON_GAME = -3, // team switching etc
 	WEAPON_SELF = -2, // console kill command
@@ -152,6 +154,9 @@ public:
 
 	void AddKills(int Kills = 1);
 	void AddDeaths(int Deaths = 1);
+	void AddGoldSpikes(int Spikes = 1);
+	void AddGreenSpikes(int Spikes = 1);
+	void AddPurpleSpikes(int Spikes = 1);
 	void AddShots(int Shots = 1);
 	void AddFreezes(int Freezes = 1);
 	void AddFrozen(int Frozen = 1);
