@@ -1763,6 +1763,9 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 	}
 	pTo->m_Kills += pFrom->m_Kills;
 	pTo->m_Deaths += pFrom->m_Deaths;
+	pTo->m_GoldSpikes += pFrom->m_GoldSpikes;
+	pTo->m_GreenSpikes += pFrom->m_GreenSpikes;
+	pTo->m_PurpleSpikes += pFrom->m_PurpleSpikes;
 	pTo->m_RifleShots += pFrom->m_RifleShots;
 	pTo->m_Freezes += pFrom->m_Freezes;
 	pTo->m_Frozen += pFrom->m_Frozen;
@@ -1770,7 +1773,8 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 	pTo->m_SpreeBest = max(pTo->m_SpreeBest, pFrom->m_SpreeBest); // TODO: make sure we do not forget something in m_Spree
 	pTo->m_Multi = pFrom->m_Multi; // TODO: same not sure what current multi is used for
 	pTo->m_MultiBest = max(pTo->m_MultiBest, pFrom->m_MultiBest); // TODO: ^^
-	// TODO: aMultis
+	for (int i = 0; i < MAX_MULTIS; i++)
+		pTo->m_aMultis[i] += pFrom->m_aMultis[i];
 	pTo->m_LastSeen = max(pTo->m_LastSeen, pFrom->m_LastSeen);
 	pTo->m_TotalOnlineTime += pFrom->m_TotalOnlineTime;
 }
@@ -1883,6 +1887,8 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	else if(!str_comp_nocase("cmdlist", pFullCmd))
 	{
 		SendChatTarget(ClientID, "commands: stats, round, cmdlist, help, info");
+		if (Server()->IsAuthed(ClientID))
+			SendChatTarget(ClientID, "admin: meta, save");
 	}
 	else if(!str_comp_nocase("stats", pFullCmd))
 	{
@@ -1894,7 +1900,10 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("save", pFullCmd))
 	{
-		SaveStats(ClientID);
+		if (Server()->IsAuthed(ClientID))
+			SaveStats(ClientID);
+		else
+			SendChatTarget(ClientID, "missing permission.");
 	}
 	else if (!str_comp_nocase_num("round ", pFullCmd, 6))
 	{

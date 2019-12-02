@@ -525,6 +525,9 @@ void CPlayer::InitRoundStats()
 
 	m_RoundStats.m_Kills = 0;
 	m_RoundStats.m_Deaths = 0;
+	m_RoundStats.m_GoldSpikes = 0;
+	m_RoundStats.m_GreenSpikes = 0;
+	m_RoundStats.m_PurpleSpikes = 0;
 	m_RoundStats.m_RifleShots = 0;
 	m_RoundStats.m_Freezes = 0;
 	m_RoundStats.m_Frozen = 0;
@@ -536,6 +539,9 @@ void CPlayer::InitRoundStats()
 	{
 		m_RoundStats.m_aMultis[i] = 0;
 	}
+	m_RoundStats.m_Unused0 = 0;
+	m_RoundStats.m_Unused1 = 0;
+	m_RoundStats.m_Unused2 = 0;
 	m_RoundStats.m_FirstSeen = 0;
 	m_RoundStats.m_LastSeen = time(NULL);
 }
