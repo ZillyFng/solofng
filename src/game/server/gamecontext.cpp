@@ -978,6 +978,12 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				(pMsg->m_Team != TEAM_SPECTATORS && m_LockTeams) || pPlayer->m_TeamChangeTick > Server()->Tick())
 				return;
 
+			if(pPlayer->GetCharacter() && pPlayer->GetCharacter()->m_FreezeTime)
+			{
+				SendChatTarget(ClientID, "You are not allowed to change team while fronzen.");
+				return;
+			}
+
 			pPlayer->m_LastSetTeam = Server()->Tick();
 
 			// Switch team on given client and kill/respawn him
