@@ -674,7 +674,6 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 		return;
 	}
 	m_pPlayer->AddDeaths();
-	Spike = WEAPON_NINJA;
 	Killer = m_LastToucherID;
 	CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
 	m_pPlayer->HandleSpreeDeath(pKiller ? Server()->ClientName(pKiller->GetCID()) : "(invalid)");
@@ -682,6 +681,7 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 	{
 		// maybe set it to own id idk what -1 actually means
 		Killer = -1;
+		Spike = WEAPON_WORLD;
 		return;
 	}
 	pKiller->HandleSpreeKill();
@@ -702,6 +702,7 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 		pKiller->m_Score += 7; // 10 total
 		pKiller->AddPurpleSpikes();
 	}
+	Spike = WEAPON_NINJA;
 }
 
 void CCharacter::Die(int Killer, int Weapon)
