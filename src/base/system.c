@@ -2653,6 +2653,9 @@ void str_replace(const char *orig, int orig_size, const char *rep, int rep_size,
 	str_copy(buf, tmp, buf_size);
 	if (tmp != NULL)
 		free(tmp);
+	free(pOrig);
+	free(pRep);
+	free(pWith);
 }
 
 int escape_filename(char *buf, int buf_len, const char *str)
