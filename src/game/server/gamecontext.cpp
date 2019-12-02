@@ -1645,13 +1645,6 @@ void CGameContext::PrintStatsMeta(int ClientID, const CFngStats *pStats)
 	SendChatTarget(ClientID, aBuf);
 	str_format(aBuf, sizeof(aBuf), "Clan: %s", pStats->m_aClan);
 	SendChatTarget(ClientID, aBuf);
-	for (int i = 0; i < MAX_IPS; i++)
-	{
-		if (pStats->m_aaIP[i][0] == '\0')
-			continue;
-		str_format(aBuf, sizeof(aBuf), "IP[%d] %s", i, pStats->m_aaIP[i]);
-		SendChatTarget(ClientID, aBuf);
-	}
 	int minutes = (pStats->m_TotalOnlineTime % 3600) / 60;
 	int hours = (pStats->m_TotalOnlineTime % 86400) / 3600;
 	int days = (pStats->m_TotalOnlineTime % (86400 * 30)) / 86400;
@@ -1725,48 +1718,10 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	PrintStats(ClientID, &Stats);
 }
 
-/*
-	char m_aName[MAX_NAME_LENGTH];
-	char m_aClan[MAX_CLAN_LENGTH];
-	char m_aaIP[5][64]; // IPv6 should be max 45 but :shrug:
-	int m_Kills, m_Deaths;
-	int m_Shots, m_Freezes, m_Frozen;
-	int m_Spree, m_SpreeBest;
-	int m_Multi, m_MultiBest, m_aMultis[32];
-*/
-
-bool CGameContext::IsNewIp(const CFngStats *pStats, const char *pIP)
-{
-	if (pIP == NULL || pIP[0] == '\0')
-		return false;
-	for (int i = 0; i < MAX_IPS; i++)
-	{
-		if (pStats->m_aaIP[i][0] == '\0')
-			return true;
-		if (!str_comp(pStats->m_aaIP[i], pIP))
-		{
-			dbg_msg("stats", "ip known already '%s' == '%s'", pStats->m_aaIP[i], pIP);
-			return false;
-		}
-	}
-	return true;
-}
-
 void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 {
 	str_copy(pTo->m_aName, pFrom->m_aName, sizeof(pTo->m_aName));
 	str_copy(pTo->m_aClan, pFrom->m_aClan, sizeof(pTo->m_aClan));
-	if (IsNewIp(pTo, pFrom->m_aaIP[0]))
-	{
-		// if ip is unkown shift all old ones one back
-		// this deletes the oldest
-		for (int i = MAX_IPS - 1; i > 0; i--)
-		{
-			str_copy(pTo->m_aaIP[i+1], pTo->m_aaIP[i], sizeof(pTo->m_aaIP[i+1]));
-		}
-		// insert the new ip at the beginning
-		str_copy(pTo->m_aaIP[0], pFrom->m_aaIP[0], sizeof(pTo->m_aaIP[0]));
-	}
 	pTo->m_Kills += pFrom->m_Kills;
 	pTo->m_Deaths += pFrom->m_Deaths;
 	pTo->m_GoldSpikes += pFrom->m_GoldSpikes;

@@ -5,13 +5,10 @@
 #include "time.h"
 
 #define MAX_MULTIS 32
-#define MAX_IPS 5
-#define MAX_IP_LEN 64 // IPv6 should be max 45 but :shrug:
 
 struct CFngStats {
 		char m_aName[MAX_NAME_LENGTH];
 		char m_aClan[MAX_CLAN_LENGTH];
-		char m_aaIP[MAX_IPS][MAX_IP_LEN];
 		int m_Kills, m_Deaths;
 		int m_GoldSpikes, m_GreenSpikes, m_PurpleSpikes;
 		int m_RifleShots, m_Freezes, m_Frozen;

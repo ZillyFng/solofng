@@ -586,8 +586,6 @@ void CPlayer::InitRoundStats()
 	mem_zero(&m_RoundStats, sizeof(m_RoundStats));
 	str_copy(m_RoundStats.m_aName, Server()->ClientName(m_ClientID), sizeof(m_RoundStats.m_aName));
 	str_copy(m_RoundStats.m_aClan, Server()->ClientClan(m_ClientID), sizeof(m_RoundStats.m_aClan));
-	Server()->GetClientAddr(GetCID(), m_RoundStats.m_aaIP[0], sizeof(m_RoundStats.m_aaIP[0]));
-
 	m_RoundStats.m_Kills = 0;
 	m_RoundStats.m_Deaths = 0;
 	m_RoundStats.m_GoldSpikes = 0;

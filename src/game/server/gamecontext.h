@@ -253,7 +253,6 @@ public:
 			-1 - if not found
 	*/
 	int GetCIDByName(const char *pName);
-	bool IsNewIp(const CFngStats *pStats, const char *pIP);
 	void PrintStatsMeta(int ClientID, const CFngStats *pStats);
 	void ShowStatsMeta(int ClientID, const char *pName);
 	void ChatCommand(int ClientID, const char *pFullCmd);
