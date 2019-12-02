@@ -518,6 +518,29 @@ void CPlayer::AddShots(int Shots)
 	m_RoundStats.m_RifleShots += Shots;
 }
 
+void CPlayer::HandleSpreeDeath(const char *pKiller)
+{
+	if (m_RoundStats.m_Spree >= 5) {
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "'%s' spree of %d kills ended by '%s'!",
+			Server()->ClientName(m_ClientID), m_RoundStats.m_Spree, pKiller);
+		GameServer()->SendChat(-1, CHAT_ALL, -1, aBuf);
+	}
+	if (m_RoundStats.m_Spree > m_RoundStats.m_SpreeBest)
+		m_RoundStats.m_SpreeBest = m_RoundStats.m_Spree;
+	m_RoundStats.m_Spree = 0;
+}
+
+void CPlayer::HandleSpreeKill()
+{
+	if (((++m_RoundStats.m_Spree) % 5) == 0) {
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "'%s' is on a spree of %d kills!",
+			Server()->ClientName(m_ClientID), m_RoundStats.m_Spree);
+		GameServer()->SendChat(-1, CHAT_ALL, -1, aBuf);
+	}
+}
+
 time_t CPlayer::HandleMulti()
 {
 	InitRoundStats();

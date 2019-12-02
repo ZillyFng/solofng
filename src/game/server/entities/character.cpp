@@ -677,12 +677,14 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 	Spike = WEAPON_NINJA;
 	Killer = m_LastToucherID;
 	CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
+	m_pPlayer->HandleSpreeDeath(pKiller ? Server()->ClientName(pKiller->GetCID()) : "(invalid)");
 	if (!pKiller)
 	{
 		// maybe set it to own id idk what -1 actually means
 		Killer = -1;
 		return;
 	}
+	pKiller->HandleSpreeKill();
 	pKiller->AddKills();
 	pKiller->m_Score += 3;
 	if (Spike == WEAPON_SPIKE_GOLD)
