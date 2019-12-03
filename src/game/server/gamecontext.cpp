@@ -1669,15 +1669,17 @@ void CGameContext::PrintStats(int ClientID, const CFngStats *pStats)
 	SendChatTarget(ClientID, aBuf);
 	str_format(aBuf, sizeof(aBuf), "Shots %d", pStats->m_RifleShots);
 	SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "Spree %d %d", pStats->m_Spree, pStats->m_SpreeBest);
+	str_format(aBuf, sizeof(aBuf), "Spree %d", pStats->m_SpreeBest);
 	SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "Multi %d %d", pStats->m_Multi, pStats->m_MultiBest);
+	str_format(aBuf, sizeof(aBuf), "Multi %d", pStats->m_MultiBest);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Spikes Gold: %d Green: %d Purple: %d", pStats->m_GoldSpikes, pStats->m_GreenSpikes, pStats->m_PurpleSpikes);
 	SendChatTarget(ClientID, aBuf);
 	for (int i = 0; i < MAX_MULTIS; i++)
 	{
 		if (!pStats->m_aMultis[i])
 			continue;
-		str_format(aBuf, sizeof(aBuf), "x%d multis %d", i, pStats->m_aMultis[i]);
+		str_format(aBuf, sizeof(aBuf), "x%d multis %d", i+2, pStats->m_aMultis[i]);
 		SendChatTarget(ClientID, aBuf);
 	}
 }
