@@ -912,6 +912,13 @@ void CCharacter::PostSnap()
 
 void CCharacter::SolofngTick()
 {
+	int hookedID = m_Core.m_HookedPlayer;
+	if (hookedID != -1)
+	{
+		CPlayer *pHooked = GameServer()->m_apPlayers[hookedID];
+		if (pHooked && pHooked->GetCharacter())
+			pHooked->GetCharacter()->m_LastToucherID = m_pPlayer->GetCID();
+	}
 	if (m_FreezeTime > 0 || m_FreezeTime == -1)
 	{
 		if (m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1 || m_FreezeTime == -1)
