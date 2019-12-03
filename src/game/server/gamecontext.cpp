@@ -1732,10 +1732,10 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 	pTo->m_RifleShots += pFrom->m_RifleShots;
 	pTo->m_Freezes += pFrom->m_Freezes;
 	pTo->m_Frozen += pFrom->m_Frozen;
-	pTo->m_Spree = pFrom->m_Spree; // TODO: idk what current spree is used for yet
-	pTo->m_SpreeBest = maximum(pTo->m_SpreeBest, pFrom->m_SpreeBest); // TODO: make sure we do not forget something in m_Spree
-	pTo->m_Multi = pFrom->m_Multi; // TODO: same not sure what current multi is used for
-	pTo->m_MultiBest = maximum(pTo->m_MultiBest, pFrom->m_MultiBest); // TODO: ^^
+	pTo->m_Spree = pFrom->m_Spree;
+	pTo->m_SpreeBest = maximum(pTo->m_SpreeBest, pFrom->m_SpreeBest);
+	pTo->m_Multi = pFrom->m_Multi;
+	pTo->m_MultiBest = maximum(pTo->m_MultiBest, pFrom->m_MultiBest);
 	for (int i = 0; i < MAX_MULTIS; i++)
 		pTo->m_aMultis[i] += pFrom->m_aMultis[i];
 	pTo->m_LastSeen = maximum(pTo->m_LastSeen, pFrom->m_LastSeen);
