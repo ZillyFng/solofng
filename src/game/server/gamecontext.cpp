@@ -1,6 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <stdio.h>
+#include <dirent.h>
 #include <base/math.h>
 
 #include <engine/shared/config.h>
@@ -1740,18 +1741,47 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 
 void CGameContext::RankThread(void *pArg)
 {
+	DIR *pDir;
+	struct dirent *pDe;
+	int Rank;
+	int Score;
 	CGameContext *pGS = static_cast<CGameContext*>(pArg);
 	dbg_msg("solofng", "init rank thread gs=%p name=%s", pGS, pGS->m_aRankThreadName);
 	CFngStats Stats;
 	if (pGS->LoadStats(-1, pGS->m_aRankThreadName, &Stats) != 0)
 	{
 		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
-		return;
+		goto end;
 	}
-	int Rank = rand() % 10000; // TODO: add rank here
-	int Score = pGS->CalcScore(&Stats);
+	Rank = rand() % 10000; // TODO: add rank here
+	Score = pGS->CalcScore(&Stats);
 	str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "%d. '%s' score %d (requested by '%s')",
 		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
+
+	char aFilename[1024];
+	if (escape_filename(aFilename, sizeof(aFilename), pGS->m_aRankThreadName))
+	{
+		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] save failed: escape error.");
+		goto end;
+	}
+	pDir = opendir(g_Config.m_SvStatsPath);
+	if(pDir == NULL)
+	{
+		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] failed to open directory '%s'.", g_Config.m_SvStatsPath);
+		goto end;
+	}
+	while ((pDe = readdir(pDir)) != NULL)
+	{
+		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
+		{
+			printf("ignore '%s'.\n", pDe->d_name);
+			continue;
+		}
+		printf("load stats '%s' ... \n", pDe->d_name);
+	}
+	closedir(pDir);
+
+	end:
 	pGS->m_RankThreadState = RT_DONE;
 }
 
@@ -1771,6 +1801,8 @@ void CGameContext::ShowRank(int ClientID, const char *pName)
 	str_copy(m_aRankThreadName, aName, sizeof(m_aRankThreadName));
 	str_copy(m_aRankThreadRequestName, Server()->ClientName(ClientID), sizeof(m_aRankThreadRequestName));
 	void *pt = thread_init(RankThread, this);
+	if (!pt)
+		SendChatTarget(ClientID, "[stats] failed to spwan thread.");
 }
 
 int CGameContext::CalcScore(const CFngStats *pStats)
