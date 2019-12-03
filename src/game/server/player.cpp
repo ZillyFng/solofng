@@ -613,6 +613,9 @@ void CPlayer::InitRoundStats()
 bool CPlayer::SaveStats(const char *pFilePath)
 {
 	InitRoundStats();
+	// 'foo's killingspree was ended by 'foo'
+	// disconnect, round end etc is basically a selfkill
+	HandleSpreeDeath(Server()->ClientName(m_ClientID));
 	CFngStats *pMergeStats;
 	CFngStats FileStats;
 	m_RoundStats.m_TotalOnlineTime = time(NULL) - m_JoinTime;
