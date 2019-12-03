@@ -146,6 +146,7 @@ private:
 
 public:
 
+	int m_InvalidSpree;
 	time_t m_JoinTime;
 	const CFngStats *GetRoundStats() { return &m_RoundStats; }
 	bool m_InitedRoundStats;

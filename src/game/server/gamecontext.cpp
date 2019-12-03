@@ -1899,6 +1899,16 @@ int CGameContext::GetCIDByName(const char *pName)
 	return -1;
 }
 
+// TODO: improve counting and track players that are in deathscreen
+int CGameContext::CountIngamePlayers()
+{
+	int c = 0;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		if (m_apPlayers[i] && m_apPlayers[i]->GetCharacter())
+			c++;
+	return c;
+}
+
 void CGameContext::EndRound()
 {
 	dbg_msg("solofng", "round end saving all stats...");

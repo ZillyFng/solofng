@@ -675,8 +675,10 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 	}
 	m_pPlayer->AddDeaths();
 	Killer = m_LastToucherID;
+	int IngamePlayers = GameServer()->CountIngamePlayers();
 	CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
-	m_pPlayer->HandleSpreeDeath(pKiller ? Server()->ClientName(pKiller->GetCID()) : "(invalid)");
+	if (g_Config.m_SvSpreePlayers <= IngamePlayers)
+		m_pPlayer->HandleSpreeDeath(pKiller ? Server()->ClientName(pKiller->GetCID()) : "(invalid)");
 	if (!pKiller)
 	{
 		// maybe set it to own id idk what -1 actually means
@@ -684,7 +686,10 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 		Spike = WEAPON_WORLD;
 		return;
 	}
-	pKiller->HandleSpreeKill();
+	if (g_Config.m_SvSpreePlayers <= IngamePlayers)
+		pKiller->HandleSpreeKill();
+	else if (++pKiller->m_InvalidSpree % 5 == 0)
+		GameServer()->SendChatTarget(pKiller->GetCID(), "Not enough players online to start a spree.");
 	pKiller->AddKills();
 	pKiller->m_Score += 3;
 	if (Spike == WEAPON_SPIKE_GOLD)
