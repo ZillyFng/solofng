@@ -236,6 +236,7 @@ public:
 		 6 - failed to read stats struct
 	*/
 	int LoadStats(int ClientID, const char *pName, CFngStats *pStatsBuf);
+	int LoadStatsFile(int ClientID, const char *pPath, CFngStats *pStatsBuf);
 	/*
 		Function: ShowStats
 			Shows global stats of a player

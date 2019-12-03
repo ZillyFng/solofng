@@ -5,6 +5,8 @@
 #include "time.h"
 
 #define MAX_MULTIS 32
+#define MAX_FILE_LEN 1024
+#define MAX_FILE_PATH 2048
 
 struct CFngStats {
 		char m_aName[MAX_NAME_LENGTH];

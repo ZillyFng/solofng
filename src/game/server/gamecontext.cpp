@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <base/math.h>
+#include <vector>
+#include <algorithm>
 
 #include <engine/shared/config.h>
 #include <engine/shared/memheap.h>
@@ -1739,12 +1741,20 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	PrintStats(ClientID, &Stats);
 }
 
+static bool cmpStats(const CFngStats *a, const CFngStats *b)
+{
+    return a->m_Kills > b->m_Kills;
+}
+
 void CGameContext::RankThread(void *pArg)
 {
 	DIR *pDir;
 	struct dirent *pDe;
 	int Rank;
 	int Score;
+	int load;
+	char aFilePath[MAX_FILE_PATH];
+	std::vector<CFngStats*> m_vpStats;
 	CGameContext *pGS = static_cast<CGameContext*>(pArg);
 	dbg_msg("solofng", "init rank thread gs=%p name=%s", pGS, pGS->m_aRankThreadName);
 	CFngStats Stats;
@@ -1753,12 +1763,8 @@ void CGameContext::RankThread(void *pArg)
 		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
 		goto end;
 	}
-	Rank = rand() % 10000; // TODO: add rank here
-	Score = pGS->CalcScore(&Stats);
-	str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "%d. '%s' score %d (requested by '%s')",
-		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
 
-	char aFilename[1024];
+	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), pGS->m_aRankThreadName))
 	{
 		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] save failed: escape error.");
@@ -1783,9 +1789,46 @@ void CGameContext::RankThread(void *pArg)
 			printf("ignore '%s'.\n", pDe->d_name);
 			continue;
 		}
-		printf("load stats '%s' ... \n", pDe->d_name);
+		if (!str_endswith(pDe->d_name, ".acc"))
+		{
+			printf("warning not a .acc file '%s'.\n", pDe->d_name);
+			continue;
+		}
+		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
+		printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
+		CFngStats *pStats = (struct CFngStats*)malloc(sizeof(struct CFngStats));
+		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
+		if (load)
+		{
+			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
+			goto end;
+		}
+		m_vpStats.push_back(pStats);
+		// dbg_msg("rank", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
 	}
 	closedir(pDir);
+	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpStats);
+	// TOP5
+	/*
+	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
+	{
+		if (++r > 5)
+			break;
+		dbg_msg("rank", "%d. '%s' kills: %d", r, m_vpStats[i]->m_aName, m_vpStats[i]->m_Kills);
+	}
+	*/
+	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
+	{
+		if (!str_comp(pGS->m_aRankThreadName, m_vpStats[i]->m_aName))
+		{
+			Rank = i+1;
+			break;
+		}
+	}
+
+	Score = pGS->CalcScore(&Stats);
+	str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "%d. '%s' score %d (requested by '%s')",
+		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
 
 	end:
 	pGS->m_RankThreadState = RT_DONE;
@@ -1851,7 +1894,7 @@ bool CGameContext::SaveStats(int ClientID)
 	CPlayer *pPlayer = m_apPlayers[ClientID];
 	if (!pPlayer)
 		return false;
-	char aFilename[1024];
+	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), Server()->ClientName(ClientID)))
 	{
 		SendChatTarget(ClientID, "[stats] save failed: escape error.");
@@ -1890,20 +1933,28 @@ int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBu
 {
 	if (!g_Config.m_SvStats)
 		return -1;
-	int err = 0;
-	char aFilename[1024];
+	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), pName))
 	{
 		if (ClientID != -1)
 			SendChatTarget(ClientID, "[stats] load failed: escape error.");
 		return -2;
 	}
-	char aFilePath[2048];
+	char aFilePath[MAX_FILE_PATH];
 	str_format(aFilePath, sizeof(aFilePath), "%s/%s.acc", g_Config.m_SvStatsPath, aFilename);
+	return LoadStatsFile(ClientID, aFilePath, pStatsBuf);
+}
+
+int CGameContext::LoadStatsFile(int ClientID, const char *pPath, CFngStats *pStatsBuf)
+{
+	if (!g_Config.m_SvStats)
+		return -1;
+	int err = 0;
 	FILE *pFile;
-	pFile = fopen(aFilePath, "rb");
+	pFile = fopen(pPath, "rb");
 	if (!pFile)
 	{
+		dbg_msg("load", "failed to load file '%s'", pPath); // TODO: remove
 		err = 1; goto fail;
 	}
 	char aMagic[4];
@@ -1939,7 +1990,7 @@ int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBu
 	return 0;
 	fail:
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "[stats] load failed: file error=%d path='%s'", err, aFilePath);
+	str_format(aBuf, sizeof(aBuf), "[stats] load failed: file error=%d path='%s'", err, pPath);
 	if (err != 1 && ClientID != -1) // expected error when stats do not exist yet
 		SendChatTarget(ClientID, aBuf);
 	return err;
