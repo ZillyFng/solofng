@@ -474,8 +474,26 @@ void CGameContext::SwapTeams()
 	m_pController->SwapTeamscore();
 }
 
+void CGameContext::RankThreadTick()
+{
+	if (m_RankThreadState == RT_IDLE)
+		return;
+	if (m_RankThreadState == RT_DONE)
+	{
+		SendChat(-1, CHAT_ALL, -1, m_aRankThreadResult);
+		m_RankThreadState = RT_IDLE;
+	}
+}
+
+void CGameContext::SolofngTick()
+{
+	RankThreadTick();
+}
+
 void CGameContext::OnTick()
 {
+	SolofngTick();
+
 	// check tuning
 	CheckPureTuning();
 
@@ -1720,24 +1738,39 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	PrintStats(ClientID, &Stats);
 }
 
-void CGameContext::ShowRank(int ClientID, const char *pName)
+void CGameContext::RankThread(void *pArg)
 {
-	char aBuf[128];
-	char aName[64];
-	str_copy(aName, pName, sizeof(aName));
-	str_clean_whitespaces_simple(aName);
+	CGameContext *pGS = static_cast<CGameContext*>(pArg);
+	dbg_msg("solofng", "init rank thread gs=%p name=%s", pGS, pGS->m_aRankThreadName);
 	CFngStats Stats;
-	if (LoadStats(ClientID, aName, &Stats) != 0)
+	if (pGS->LoadStats(-1, pGS->m_aRankThreadName, &Stats) != 0)
 	{
-		str_format(aBuf, sizeof(aBuf), "[stats] player '%s' is not ranked yet.", aName);
-		SendChatTarget(ClientID, aBuf);
+		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
 		return;
 	}
 	int Rank = rand() % 10000; // TODO: add rank here
-	int Score = CalcScore(&Stats);
-	str_format(aBuf, sizeof(aBuf), "%d. '%s' score %d (requested by '%s')",
-		Rank, pName, Score, Server()->ClientName(ClientID));
-	SendChat(-1, CHAT_ALL, -1, aBuf);
+	int Score = pGS->CalcScore(&Stats);
+	str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "%d. '%s' score %d (requested by '%s')",
+		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
+	pGS->m_RankThreadState = RT_DONE;
+}
+
+void CGameContext::ShowRank(int ClientID, const char *pName)
+{
+	if (m_RankThreadState != RT_IDLE)
+	{
+		SendChatTarget(ClientID, "[stats] rank is currently being requested try agian later.");
+		return;
+	}
+	char aName[64];
+	str_copy(aName, pName, sizeof(aName));
+	str_clean_whitespaces_simple(aName);
+
+	m_RankThreadState = RT_ACTIVE;
+	str_copy(m_aRankThreadResult, "[stats] something went wrong.", sizeof(m_aRankThreadResult));
+	str_copy(m_aRankThreadName, aName, sizeof(m_aRankThreadName));
+	str_copy(m_aRankThreadRequestName, Server()->ClientName(ClientID), sizeof(m_aRankThreadRequestName));
+	void *pt = thread_init(RankThread, this);
 }
 
 int CGameContext::CalcScore(const CFngStats *pStats)
@@ -1823,7 +1856,8 @@ int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBu
 	char aFilename[1024];
 	if (escape_filename(aFilename, sizeof(aFilename), pName))
 	{
-		SendChatTarget(ClientID, "[stats] load failed: escape error.");
+		if (ClientID != -1)
+			SendChatTarget(ClientID, "[stats] load failed: escape error.");
 		return -2;
 	}
 	char aFilePath[2048];
@@ -1839,7 +1873,8 @@ int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBu
 	{
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "magic='%s'", aMagic);
-		SendChatTarget(ClientID, aBuf);
+		if (ClientID != -1)
+			SendChatTarget(ClientID, aBuf);
 		err = 2; goto fail;
 	}
 	if (!IsFngMagic(aMagic, sizeof(aMagic)))
@@ -1867,7 +1902,7 @@ int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBu
 	fail:
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "[stats] load failed: file error=%d path='%s'", err, aFilePath);
-	if (err != 1) // expected error when stats do not exist yet
+	if (err != 1 && ClientID != -1) // expected error when stats do not exist yet
 		SendChatTarget(ClientID, aBuf);
 	return err;
 }

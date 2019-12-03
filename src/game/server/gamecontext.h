@@ -189,6 +189,19 @@ public:
 
 	// solofng
 
+	void RankThreadTick();
+	void SolofngTick();
+	static void RankThread(void *pArg);
+	enum {
+		RT_IDLE,
+		RT_ACTIVE,
+		RT_DONE,
+	};
+	char m_aRankThreadName[MAX_NAME_LENGTH];
+	char m_aRankThreadRequestName[MAX_NAME_LENGTH];
+	char m_aRankThreadResult[128];
+	int m_RankThreadState;
+	void *m_pRankThread;
 	void PrintStats(int ClientID, const CFngStats *pStats);
 	bool IsFngMagic(const char *pMagic, int Size);
 	bool IsFngVersion(const char *pVersion, int Size);
@@ -228,7 +241,7 @@ public:
 			Shows global stats of a player
 
 		Parameters:
-			ClientID - id to show stats to
+			ClientID - id to show stats to (-1 no msg)
 			pName - unescaped ingame name of stats player
 	*/
 	void ShowStats(int ClientID, const char *pName);
