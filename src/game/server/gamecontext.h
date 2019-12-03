@@ -253,6 +253,16 @@ public:
 			-1 - if not found
 	*/
 	int GetCIDByName(const char *pName);
+	/*
+		Function: ShowRank
+			Shows global score and rank of a player
+
+		Parameters:
+			ClientID - id to show rank to
+			pName - unescaped ingame name of stats player
+	*/
+	void ShowRank(int ClientID, const char *pName);
+	int CalcScore(const CFngStats *pStats);
 	int CountPlayers();
 	int CountIngamePlayers();
 	void PrintStatsMeta(int ClientID, const CFngStats *pStats);

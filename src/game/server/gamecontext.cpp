@@ -1720,6 +1720,37 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	PrintStats(ClientID, &Stats);
 }
 
+void CGameContext::ShowRank(int ClientID, const char *pName)
+{
+	char aBuf[128];
+	char aName[64];
+	str_copy(aName, pName, sizeof(aName));
+	str_clean_whitespaces_simple(aName);
+	CFngStats Stats;
+	if (LoadStats(ClientID, aName, &Stats) != 0)
+	{
+		str_format(aBuf, sizeof(aBuf), "[stats] player '%s' is not ranked yet.", aName);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
+	int Rank = rand() % 10000; // TODO: add rank here
+	int Score = CalcScore(&Stats);
+	str_format(aBuf, sizeof(aBuf), "%d. '%s' score %d (requested by '%s')",
+		Rank, pName, Score, Server()->ClientName(ClientID));
+	SendChat(-1, CHAT_ALL, -1, aBuf);
+}
+
+int CGameContext::CalcScore(const CFngStats *pStats)
+{
+	int Score = 0;
+	Score += pStats->m_Freezes;
+	Score += pStats->m_Kills * 3;
+	Score += pStats->m_GoldSpikes * 5;
+	Score += pStats->m_GreenSpikes * 3;
+	Score += pStats->m_PurpleSpikes * 7;
+	return Score;
+}
+
 void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 {
 	str_copy(pTo->m_aName, pFrom->m_aName, sizeof(pTo->m_aName));
@@ -1874,6 +1905,24 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 			return;
 		}
 		ShowStats(ClientID, pFullCmd+6);
+	}
+	else if(!str_comp_nocase("rank", pFullCmd))
+	{
+		if (!g_Config.m_SvStats)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
+		ShowRank(ClientID, Server()->ClientName(ClientID));
+	}
+	else if(!str_comp_nocase_num("rank ", pFullCmd, 5))
+	{
+		if (!g_Config.m_SvStats)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
+		ShowRank(ClientID, pFullCmd+5);
 	}
 	else if(!str_comp_nocase("save", pFullCmd))
 	{
