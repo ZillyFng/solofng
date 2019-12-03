@@ -17,6 +17,9 @@ struct CFngStats {
 		int m_Spree, m_SpreeBest;
 		time_t m_LastKillTime;
 		int m_Multi, m_MultiBest, m_aMultis[MAX_MULTIS];
+		// m_Tmp is never presistet to file and only used in memory
+		// so it could use every other intger instead for sorting ranks
+		// in case the space is needed keep in mind m_Tmp is basically unused
 		int m_Tmp, m_Unused1, m_Unused2;
 		time_t m_FirstSeen, m_LastSeen, m_TotalOnlineTime;
 };
