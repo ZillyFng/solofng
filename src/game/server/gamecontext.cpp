@@ -1881,6 +1881,12 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 		else
 			SendChatTarget(ClientID, "missing permission.");
 	}
+	else if(!str_comp_nocase("list", pFullCmd))
+	{
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "Online: %d Ingame: %d", CountPlayers(), CountIngamePlayers());
+		SendChatTarget(ClientID, aBuf);
+	}
 	else
 	{
 		SendChatTarget(ClientID, "unkown command try '/cmdlist'.");
@@ -1899,12 +1905,20 @@ int CGameContext::GetCIDByName(const char *pName)
 	return -1;
 }
 
-// TODO: improve counting and track players that are in deathscreen
+int CGameContext::CountPlayers()
+{
+	int c = 0;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		if (m_apPlayers[i])
+			c++;
+	return c;
+}
+
 int CGameContext::CountIngamePlayers()
 {
 	int c = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++)
-		if (m_apPlayers[i] && m_apPlayers[i]->GetCharacter())
+		if (m_apPlayers[i] && m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
 			c++;
 	return c;
 }
