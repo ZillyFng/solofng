@@ -10,6 +10,12 @@
 
 #include "player.h"
 
+#if defined(CONF_FAMILY_UNIX)
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -633,7 +639,29 @@ bool CPlayer::SaveStats(const char *pFilePath)
 	}
 
 	FILE *pFile;
+#if defined(CONF_FAMILY_UNIX)
+	int fd;
+	struct stat st0, st1;
 	pFile = fopen(pFilePath, "wb");
+	char aLockPath[2048+4];
+	str_format(aLockPath, sizeof(aLockPath), "%s.lck", pFilePath);
+	// lock file code by user2769258 and Arnaud Le Blanc
+	// https://stackoverflow.com/a/18745264
+	// Not portable! E.g. on Windows st_ino is always 0. – rustyx Nov 8 '17 at 18:35
+	// Windows has own lock system (note by ChillerDragon)
+	while(1)
+	{
+		fd = open(aLockPath, O_CREAT);
+		flock(fd, LOCK_EX);
+
+		fstat(fd, &st0);
+		stat(aLockPath, &st1);
+		if(st0.st_ino == st1.st_ino) break;
+
+		dbg_msg("stats", "wait for locked file...");
+		close(fd);
+	}
+#endif
 	if(!pFile)
 	{
 		GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file open.");
@@ -643,6 +671,10 @@ bool CPlayer::SaveStats(const char *pFilePath)
 	fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
 	fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
 	fclose(pFile);
+#if defined(CONF_FAMILY_UNIX)
+	unlink(aLockPath);
+	flock(fd, LOCK_UN);
+#endif
 	dbg_msg("stats", "saved ClientID=%d to file '%s' (%s)", m_ClientID, pFilePath, HasStast ? "merge" : "new");
 	m_InitedRoundStats = false;
 	InitRoundStats(); // Refresh/Delete round stats

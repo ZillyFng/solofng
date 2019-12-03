@@ -1772,6 +1772,12 @@ void CGameContext::RankThread(void *pArg)
 	}
 	while ((pDe = readdir(pDir)) != NULL)
 	{
+		if (str_endswith(pDe->d_name, ".lck"))
+		{
+			dbg_msg("rank", "file '%s' is locked by write.", pDe->d_name);
+			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
+			goto end;
+		}
 		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
 		{
 			printf("ignore '%s'.\n", pDe->d_name);
