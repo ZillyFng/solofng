@@ -213,7 +213,7 @@ public:
 
 	Returns:
 		 0 - success
-		-1 - invalid file name
+		-1 - stats decactivated by config
 		-2 - curl escape error
 		 1 - file open error
 		 2 - failed to read fng magic

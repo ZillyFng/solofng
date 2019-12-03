@@ -1742,6 +1742,8 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 
 bool CGameContext::SaveStats(int ClientID)
 {
+	if (!g_Config.m_SvStats)
+		return false;
 	CPlayer *pPlayer = m_apPlayers[ClientID];
 	if (!pPlayer)
 		return false;
@@ -1782,6 +1784,8 @@ bool CGameContext::IsFngVersion(const char *pVersion, int Size)
 
 int CGameContext::LoadStats(int ClientID, const char *pName, CFngStats *pStatsBuf)
 {
+	if (!g_Config.m_SvStats)
+		return -1;
 	int err = 0;
 	char aFilename[1024];
 	if (escape_filename(aFilename, sizeof(aFilename), pName))
@@ -1853,14 +1857,29 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("stats", pFullCmd))
 	{
+		if (!g_Config.m_SvStats)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
 		ShowStats(ClientID, Server()->ClientName(ClientID));
 	}
 	else if(!str_comp_nocase_num("stats ", pFullCmd, 6))
 	{
+		if (!g_Config.m_SvStats)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
 		ShowStats(ClientID, pFullCmd+6);
 	}
 	else if(!str_comp_nocase("save", pFullCmd))
 	{
+		if (!g_Config.m_SvStats)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
 		if (Server()->IsAuthed(ClientID))
 			SaveStats(ClientID);
 		else
@@ -1940,6 +1959,8 @@ int CGameContext::CountIngamePlayers()
 void CGameContext::EndRound()
 {
 	dbg_msg("solofng", "round end saving all stats...");
+	if (!g_Config.m_SvStats)
+		return;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (!m_apPlayers[i])
