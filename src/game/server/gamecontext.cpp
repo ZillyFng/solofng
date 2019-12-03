@@ -1887,6 +1887,20 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 		str_format(aBuf, sizeof(aBuf), "Online: %d Ingame: %d", CountPlayers(), CountIngamePlayers());
 		SendChatTarget(ClientID, aBuf);
 	}
+#ifdef CONF_DEBUG
+	else if(!str_comp_nocase("crash", pFullCmd))
+	{
+		if (!Server()->IsAuthed(ClientID))
+		{
+			SendChatTarget(ClientID, "missing permission.");
+			return;
+		}
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			m_apPlayers[i]->GetCharacter()->m_DeepFreeze = 2;
+		}
+	}
+#endif
 	else
 	{
 		SendChatTarget(ClientID, "unkown command try '/cmdlist'.");

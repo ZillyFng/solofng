@@ -1339,7 +1339,9 @@ static void OnCrash(int sig)
 {
 	printf("[stats] caught signal=%d saving stats...\n", sig);
 	sp_GameServer->EndRound();
-	exit(0); // TODO: should probably not exit with ok
+	if (sig == SIGSEGV)
+		exit(1);
+	exit(0);
 }
 
 int CServer::Run()
@@ -1400,11 +1402,15 @@ int CServer::Run()
 	}
 
 	sp_GameServer = GameServer();
-	signal(SIGINT, OnCrash);
-	signal(SIGILL, OnCrash);
-	signal(SIGSEGV, OnCrash);
-	signal(SIGFPE, OnCrash);
-	signal(SIGABRT, OnCrash);
+	if (g_Config.m_SvSaveOnSignal)
+	{
+		signal(SIGINT, OnCrash);
+		signal(SIGILL, OnCrash);
+		signal(SIGFPE, OnCrash);
+		signal(SIGABRT, OnCrash);
+		if (g_Config.m_SvSaveOnSignal > 1)
+			signal(SIGSEGV, OnCrash);
+	}
 
 	// process pending commands
 	m_pConsole->StoreCommands(false);
