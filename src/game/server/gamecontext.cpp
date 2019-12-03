@@ -1901,7 +1901,7 @@ int CGameContext::GetCIDByName(const char *pName)
 
 void CGameContext::EndRound()
 {
-	SendChat(-1, CHAT_ALL, -1, "end match");
+	dbg_msg("solofng", "round end saving all stats...");
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (!m_apPlayers[i])
