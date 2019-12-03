@@ -609,7 +609,7 @@ void CPlayer::InitRoundStats()
 	{
 		m_RoundStats.m_aMultis[i] = 0;
 	}
-	m_RoundStats.m_Unused0 = 0;
+	m_RoundStats.m_Tmp = 0;
 	m_RoundStats.m_Unused1 = 0;
 	m_RoundStats.m_Unused2 = 0;
 	m_RoundStats.m_FirstSeen = 0;

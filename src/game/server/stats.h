@@ -17,7 +17,7 @@ struct CFngStats {
 		int m_Spree, m_SpreeBest;
 		time_t m_LastKillTime;
 		int m_Multi, m_MultiBest, m_aMultis[MAX_MULTIS];
-		int m_Unused0, m_Unused1, m_Unused2;
+		int m_Tmp, m_Unused1, m_Unused2;
 		time_t m_FirstSeen, m_LastSeen, m_TotalOnlineTime;
 };
 

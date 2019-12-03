@@ -1741,9 +1741,17 @@ void CGameContext::ShowStats(int ClientID, const char *pName)
 	PrintStats(ClientID, &Stats);
 }
 
-static bool cmpStats(const CFngStats *a, const CFngStats *b)
+/*
+// TODO: implemt /rank_kills etc
+static bool cmpKills(const CFngStats *a, const CFngStats *b)
 {
     return a->m_Kills > b->m_Kills;
+}
+*/
+
+static bool cmpTmp(const CFngStats *a, const CFngStats *b)
+{
+    return a->m_Tmp > b->m_Tmp;
 }
 
 void CGameContext::RankThread(void *pArg)
@@ -1803,11 +1811,12 @@ void CGameContext::RankThread(void *pArg)
 			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
 			goto end;
 		}
+		pStats->m_Tmp = pGS->CalcScore(pStats);
 		m_vpStats.push_back(pStats);
 		// dbg_msg("rank", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
 	}
 	closedir(pDir);
-	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpStats);
+	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpTmp);
 	// TOP5
 	/*
 	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
@@ -2032,7 +2041,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("rank", pFullCmd))
 	{
-		if (!g_Config.m_SvStats)
+		if (!g_Config.m_SvStats || !g_Config.m_SvAllowRankCmds)
 		{
 			SendChatTarget(ClientID, "[stats] deactivated by admin.");
 			return;
@@ -2041,7 +2050,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase_num("rank ", pFullCmd, 5))
 	{
-		if (!g_Config.m_SvStats)
+		if (!g_Config.m_SvStats || !g_Config.m_SvAllowRankCmds)
 		{
 			SendChatTarget(ClientID, "[stats] deactivated by admin.");
 			return;
