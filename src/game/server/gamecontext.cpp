@@ -2064,7 +2064,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 			SendChatTarget(ClientID, "[stats] deactivated by admin.");
 			return;
 		}
-		if (Server()->IsAuthed(ClientID))
+		if (Server()->IsAuthedAdmin(ClientID))
 			SaveStats(ClientID);
 		else
 			SendChatTarget(ClientID, "missing permission.");
@@ -2093,7 +2093,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 #ifdef CONF_DEBUG
 	else if(!str_comp_nocase("crash", pFullCmd))
 	{
-		if (!Server()->IsAuthed(ClientID))
+		if (!Server()->IsAuthedAdmin(ClientID))
 		{
 			SendChatTarget(ClientID, "missing permission.");
 			return;

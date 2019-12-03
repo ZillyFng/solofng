@@ -436,6 +436,16 @@ bool CServer::IsAuthed(int ClientID) const
 	return m_aClients[ClientID].m_Authed;
 }
 
+bool CServer::IsAuthedMod(int ClientID) const
+{
+	return m_aClients[ClientID].m_Authed == AUTHED_MOD;
+}
+
+bool CServer::IsAuthedAdmin(int ClientID) const
+{
+	return m_aClients[ClientID].m_Authed == AUTHED_ADMIN;
+}
+
 bool CServer::IsBanned(int ClientID)
 {
 	return m_ServerBan.IsBanned(m_NetServer.ClientAddr(ClientID), 0, 0, 0);
