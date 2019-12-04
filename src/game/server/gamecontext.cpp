@@ -1815,6 +1815,7 @@ void CGameContext::RankThread(void *pArg)
 		if (load)
 		{
 			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
+			free(pStats);
 			goto end;
 		}
 		pStats->m_Tmp = pGS->CalcScore(pStats);
@@ -1846,6 +1847,8 @@ void CGameContext::RankThread(void *pArg)
 		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
 
 	end:
+	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
+		free(m_vpStats[i]);
 	pGS->m_RankThreadState = RT_DONE;
 }
 
