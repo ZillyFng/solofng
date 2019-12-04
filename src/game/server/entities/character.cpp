@@ -922,9 +922,7 @@ void CCharacter::SolofngTick()
 	if (m_FreezeTime > 0 || m_FreezeTime == -1)
 	{
 		if (m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1 || m_FreezeTime == -1)
-		{
-			GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), vec2(0, 0), (m_FreezeTime + 1) / Server()->TickSpeed(), 0, true);
-		}
+			GameServer()->CreateDamage(m_Pos, m_pPlayer->GetCID(), vec2(0, 0), (m_FreezeTime + 1) / Server()->TickSpeed(), 0, true, m_pPlayer->GetCID());
 		if (m_FreezeTime > 0)
 			m_FreezeTime--;
 		else
