@@ -291,7 +291,6 @@ public:
 	void PrintStatsMeta(int ClientID, const CFngStats *pStats);
 	void ShowStatsMeta(int ClientID, const char *pName);
 	void ChatCommand(int ClientID, const char *pFullCmd);
-	void BanOnDisconnect(const char *pAddr);
 	virtual void EndRound();
 };
 

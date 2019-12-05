@@ -120,6 +120,5 @@ MACRO_CONFIG_INT(SvSpreePlayers, sv_spree_players, 5, 1, 60, CFGFLAG_SERVER, "ho
 MACRO_CONFIG_INT(SvSaveOnSignal, sv_save_on_signal, 1, 0, 2, CFGFLAG_SERVER, "0=off 1=int/ill/fpe/abrt 2=1/segv")
 MACRO_CONFIG_INT(SvStats, sv_stats, 1, 0, 1, CFGFLAG_SERVER, "0=off 1=use file stats (sv_stats_path is related)")
 MACRO_CONFIG_INT(SvAllowRankCmds, sv_allow_rank_cmds, 1, 0, 1, CFGFLAG_SERVER, "0=off allows threaded ranking commands that could mess up things")
-MACRO_CONFIG_INT(SvPunishFreezeDisconnect, sv_punish_freeze_disconnect, 1, 0, 60, CFGFLAG_SERVER, "0=off otherwise bantime in minutes when leaving server while being frozen")
 
 #endif
