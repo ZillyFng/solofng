@@ -1922,6 +1922,7 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 	pTo->m_MultiBest = maximum(pTo->m_MultiBest, pFrom->m_MultiBest);
 	for (int i = 0; i < MAX_MULTIS; i++)
 		pTo->m_aMultis[i] += pFrom->m_aMultis[i];
+	pTo->m_CfgFlags = pFrom->m_CfgFlags;
 	pTo->m_LastSeen = maximum(pTo->m_LastSeen, pFrom->m_LastSeen);
 	pTo->m_TotalOnlineTime += pFrom->m_TotalOnlineTime;
 }
@@ -2131,11 +2132,12 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase_num("config ", pFullCmd, 7))
 	{
+		pPlayer->InitRoundStats();
 		char aCfg[16];
 		str_copy(aCfg, pFullCmd+7, sizeof(aCfg));
 		if(!str_comp_nocase("hammer", aCfg))
 		{
-			str_format(aBuf, sizeof(aBuf), "[config] hammer tune is set to '%s'", pPlayer->m_IsFngHammer ? "fng" : "vanilla");
+			str_format(aBuf, sizeof(aBuf), "[config] hammer tune is set to '%s'", pPlayer->IsConfig(CFG_VANILLA_HAMMER) ? "vanilla" : "fng");
 			SendChatTarget(ClientID, aBuf);
 		}
 		else if(!str_comp_nocase_num("hammer ", aCfg, 7))
@@ -2144,13 +2146,13 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 			str_copy(aValue, aCfg+7, sizeof(aValue));
 			if (!str_comp_nocase(aValue, "fng"))
 			{
-				SendChatTarget(ClientID, "[config] hammer tune set to fng.");
-				pPlayer->m_IsFngHammer = true;
+				SendChatTarget(ClientID, "[config] update hammer tune to 'fng'.");
+				pPlayer->UnsetConfig(CFG_VANILLA_HAMMER);
 			}
 			else if (!str_comp_nocase(aValue, "vanilla"))
 			{
-				SendChatTarget(ClientID, "[config] hammer tune set to vanilla.");
-				pPlayer->m_IsFngHammer = false;
+				SendChatTarget(ClientID, "[config] update hammer tune to 'vanilla'.");
+				pPlayer->SetConfig(CFG_VANILLA_HAMMER);
 			}
 			else
 			{

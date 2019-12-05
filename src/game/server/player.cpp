@@ -487,6 +487,24 @@ void CPlayer::TryRespawn()
 
 // solofng
 
+void CPlayer::SetConfig(int Cfg)
+{
+	InitRoundStats();
+	m_RoundStats.m_CfgFlags |= Cfg;
+}
+
+void CPlayer::UnsetConfig(int Cfg)
+{
+	InitRoundStats();
+	m_RoundStats.m_CfgFlags &= ~(Cfg);
+}
+
+bool CPlayer::IsConfig(int Cfg)
+{
+	InitRoundStats();
+	return m_RoundStats.m_CfgFlags&Cfg;
+}
+
 void CPlayer::AddKills(int Kills)
 {
 	InitRoundStats();
@@ -587,7 +605,11 @@ void CPlayer::InitRoundStats()
 	if (m_InitedRoundStats)
 		return;
 	m_InitedRoundStats = true;
-	dbg_msg("stats", "init round stats ClientID=%d", m_ClientID);
+	CFngStats Stats;
+	bool HasStats = true;
+	if (GameServer()->LoadStats(-1, Server()->ClientName(m_ClientID), &Stats) != 0)
+		HasStats = false;
+	dbg_msg("stats", "init round stats ClientID=%d HasStats=%d", m_ClientID, HasStats);
 	// mem_zero probably redundants all the explicit 0 intializations but what ever
 	mem_zero(&m_RoundStats, sizeof(m_RoundStats));
 	str_copy(m_RoundStats.m_aName, Server()->ClientName(m_ClientID), sizeof(m_RoundStats.m_aName));
@@ -610,7 +632,9 @@ void CPlayer::InitRoundStats()
 		m_RoundStats.m_aMultis[i] = 0;
 	}
 	m_RoundStats.m_Tmp = 0;
-	m_RoundStats.m_Unused1 = 0;
+	m_RoundStats.m_CfgFlags = 0;
+	if (HasStats)
+		m_RoundStats.m_CfgFlags = Stats.m_CfgFlags;
 	m_RoundStats.m_Unused2 = 0;
 	m_RoundStats.m_FirstSeen = 0;
 	m_RoundStats.m_LastSeen = time(NULL);

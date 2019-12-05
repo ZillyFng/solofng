@@ -146,7 +146,6 @@ private:
 
 public:
 
-	bool m_IsFngHammer;
 	int m_InvalidSpree;
 	time_t m_JoinTime;
 	const CFngStats *GetRoundStats() { return &m_RoundStats; }
@@ -154,6 +153,9 @@ public:
 	void InitRoundStats();
 	bool SaveStats(const char *pFilePath);
 
+	void SetConfig(int Cfg);
+	void UnsetConfig(int Cfg);
+	bool IsConfig(int Cfg);
 	void AddKills(int Kills = 1);
 	void AddDeaths(int Deaths = 1);
 	void AddGoldSpikes(int Spikes = 1);
