@@ -1693,6 +1693,10 @@ void CGameContext::PrintStatsMeta(int ClientID, const CFngStats *pStats)
 	SendChatTarget(ClientID, aBuf);
 	str_format(aBuf, sizeof(aBuf), "Clan: %s", pStats->m_aClan);
 	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "Config: %d", pStats->m_CfgFlags);
+	SendChatTarget(ClientID, aBuf);
+	str_format(aBuf, sizeof(aBuf), "- hammertune: %s", pStats->m_CfgFlags&CFG_VANILLA_HAMMER ? "vanilla" : "fng");
+	SendChatTarget(ClientID, aBuf);
 	int minutes = (pStats->m_TotalOnlineTime % 3600) / 60;
 	int hours = (pStats->m_TotalOnlineTime % 86400) / 3600;
 	int days = (pStats->m_TotalOnlineTime % (86400 * 30)) / 86400;
