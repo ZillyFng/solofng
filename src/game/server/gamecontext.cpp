@@ -2330,7 +2330,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 #endif
 	else
 	{
-		SendChatTarget(ClientID, "unkown command try '/cmdlist'.");
+		SendChatTarget(ClientID, "unknown command try '/cmdlist'.");
 	}
 }
 
