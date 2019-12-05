@@ -329,7 +329,7 @@ void CCharacter::FireWeapon()
 					Dir = vec2(0.f, -1.f);
 
 				pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, Dir*-1, 0,
-					m_pPlayer->GetCID(), m_ActiveWeapon);
+					m_pPlayer->GetCID(), m_ActiveWeapon, this);
 				Hits++;
 			}
 
@@ -764,8 +764,29 @@ void CCharacter::Die(int Killer, int Weapon)
 	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
 }
 
-bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon)
+bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon, CCharacter *pFrom)
 {
+	if (Weapon == WEAPON_HAMMER && pFrom)
+	{
+		vec2 Dir;
+		if (length(m_Pos - pFrom->m_Pos) > 0.0f)
+			Dir = normalize(m_Pos - pFrom->m_Pos);
+		else
+			Dir = vec2(0.f, -1.f);
+
+		vec2 Push = vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
+		if (GameServer()->m_pController->IsTeamplay() && pFrom->GetPlayer() && m_pPlayer->GetTeam() == pFrom->GetPlayer()->GetTeam() && IsFreezed())
+		{
+			Push.x *= g_Config.m_SvMeltHammerScaleX*0.01f;
+			Push.y *= g_Config.m_SvMeltHammerScaleY*0.01f;
+		}
+		else
+		{
+			Push.x *= g_Config.m_SvHammerScaleX*0.01f;
+			Push.y *= g_Config.m_SvHammerScaleY*0.01f;
+		}
+		Force = Push;
+	}
 	m_Core.m_Vel += Force;
 
 	m_LastToucherID = From;

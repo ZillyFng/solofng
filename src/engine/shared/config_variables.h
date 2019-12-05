@@ -110,6 +110,10 @@ MACRO_CONFIG_INT(DbgResizable, dbg_resizable, 0, 0, 0, CFGFLAG_CLIENT, "Enables 
 
 // solofng
 
+MACRO_CONFIG_INT(SvHammerScaleX, sv_hammer_scale_x, 320, 1, 1000, CFGFLAG_SERVER, "linearly scale up hammer x power, percentage, for hammering enemies and unfrozen teammates")
+MACRO_CONFIG_INT(SvHammerScaleY, sv_hammer_scale_y, 120, 1, 1000, CFGFLAG_SERVER, "linearly scale up hammer y power, percentage, for hammering enemies and unfrozen teammates")
+MACRO_CONFIG_INT(SvMeltHammerScaleX, sv_melt_hammer_scale_x, 50, 1, 1000, CFGFLAG_SERVER, "linearly scale up hammer x power, percentage, for hammering frozen teammates")
+MACRO_CONFIG_INT(SvMeltHammerScaleY, sv_melt_hammer_scale_y, 50, 1, 1000, CFGFLAG_SERVER, "linearly scale up hammer y power, percentage, for hammering frozen teammates")
 MACRO_CONFIG_INT(SvFreezeDelay, sv_freeze_delay, 9, 1, 30, CFGFLAG_SERVER, "How many seconds the players will remain frozen")
 MACRO_CONFIG_STR(SvStatsPath, sv_stats_path, 512, "stats", CFGFLAG_SERVER, "path to solofng stats directory")
 MACRO_CONFIG_INT(SvSpreePlayers, sv_spree_players, 5, 1, 60, CFGFLAG_SERVER, "how many players have to be online to count killingsprees")
