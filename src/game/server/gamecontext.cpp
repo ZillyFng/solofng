@@ -765,30 +765,32 @@ void CGameContext::OnClientTeamChange(int ClientID)
 	}
 }
 
-void CGameContext::FngDisconnect(int ClientID, const char *pReason)
+void CGameContext::BanOnDisconnect(const char *pAddr)
 {
-	SaveStats(ClientID);
-	CPlayer *pPlayer = m_apPlayers[ClientID];
-	if (!pPlayer)
-		return;
-	CCharacter *pChr = pPlayer->GetCharacter();
-	if (!pChr)
-		return;
-	if (pChr->m_FreezeTime && g_Config.m_SvPunishFreezeDisconnect)
-	{
-		char aCmd[1024];
-		char aAddrStr[NETADDR_MAXSTRSIZE] = {0};
-		Server()->GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
-		str_format(aCmd, sizeof(aCmd), "ban %s %d Ban: disconnect while frozen", aAddrStr, g_Config.m_SvPunishFreezeDisconnect);
-		Server()->SetRconCID(IServer::RCON_CID_SERV);
-		Console()->ExecuteLine(aCmd);
-		pChr->m_FreezeTime = 0; // set it to 0 to make sure there is no ban loop
-	}
+	char aCmd[1024];
+	str_format(aCmd, sizeof(aCmd), "ban %s %d disconnect while frozen", pAddr, g_Config.m_SvPunishFreezeDisconnect);
+	Server()->SetRconCID(IServer::RCON_CID_SERV);
+	Console()->ExecuteLine(aCmd);
 }
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
-	FngDisconnect(ClientID, pReason);
+	SaveStats(ClientID);
+	bool IsFrozen = false;
+	char aAddrStr[NETADDR_MAXSTRSIZE] = {0};
+	Server()->GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	if (pPlayer)
+	{
+		CCharacter *pChr = pPlayer->GetCharacter();
+		if (pChr)
+		{
+			if (pChr->m_FreezeTime && g_Config.m_SvPunishFreezeDisconnect)
+			{
+				IsFrozen = true;
+			}
+		}
+	}
 	AbortVoteOnDisconnect(ClientID);
 	m_pController->OnPlayerDisconnect(m_apPlayers[ClientID]);
 
@@ -824,6 +826,8 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 	m_apPlayers[ClientID] = 0;
 
 	m_VoteUpdate = true;
+	if (IsFrozen)
+		BanOnDisconnect(aAddrStr);
 }
 
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
