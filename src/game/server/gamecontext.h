@@ -192,14 +192,22 @@ public:
 	void RankThreadTick();
 	void SolofngTick();
 	static void RankThread(void *pArg);
+	static void TopThread(void *pArg);
 	enum {
 		RT_IDLE,
 		RT_ACTIVE,
 		RT_DONE,
+		RT_ERR,
+
+		TYPE_RANK=0,
+		TYPE_TOP,
 	};
+	int m_RankThreadType;
+	int m_RankThreadTop; // top5 arg
+	int m_RankThreadReqID;
 	char m_aRankThreadName[MAX_NAME_LENGTH];
 	char m_aRankThreadRequestName[MAX_NAME_LENGTH];
-	char m_aRankThreadResult[128];
+	char m_aRankThreadResult[5][128];
 	int m_RankThreadState;
 	void *m_pRankThread;
 	void PrintStats(int ClientID, const CFngStats *pStats);
@@ -276,6 +284,7 @@ public:
 			pName - unescaped ingame name of stats player
 	*/
 	void ShowRank(int ClientID, const char *pName);
+	void ShowTopScore(int ClientID, int Top = 1);
 	int CalcScore(const CFngStats *pStats);
 	int CountPlayers();
 	int CountIngamePlayers();

@@ -489,9 +489,29 @@ void CGameContext::RankThreadTick()
 		return;
 	if (m_RankThreadState == RT_DONE)
 	{
-		SendChat(-1, CHAT_ALL, -1, m_aRankThreadResult);
-		m_RankThreadState = RT_IDLE;
+		if (m_RankThreadType == TYPE_RANK)
+		{
+			SendChat(-1, CHAT_ALL, -1, m_aRankThreadResult[0]);
+		}
+		else // /top5
+		{
+			SendChatTarget(m_RankThreadReqID, "----------- Top 5 -----------");
+			for (int i = 0; i < 5; i++)
+				SendChatTarget(m_RankThreadReqID, m_aRankThreadResult[i]);
+			SendChatTarget(m_RankThreadReqID, "-------------------------------");
+		}
 	}
+	else if (m_RankThreadState == RT_ERR)
+	{
+		SendChatTarget(m_RankThreadReqID, m_aRankThreadResult[0]);
+	}
+	dbg_msg(
+		"solofng",
+		"finished %s thread. (%s)",
+		m_RankThreadType == TYPE_RANK ? "rank" : "top",
+		m_RankThreadState == RT_DONE ? "success" : "error"
+	);
+	m_RankThreadState = RT_IDLE;
 }
 
 void CGameContext::SolofngTick()
@@ -1785,6 +1805,113 @@ static bool cmpTmp(const CFngStats *a, const CFngStats *b)
     return a->m_Tmp > b->m_Tmp;
 }
 
+void CGameContext::TopThread(void *pArg)
+{
+	DIR *pDir;
+	struct dirent *pDe;
+	int load;
+	int start;
+	int err = 0;
+	int row_index = 0;
+	char aFilePath[MAX_FILE_PATH];
+	std::vector<CFngStats*> m_vpStats;
+	CGameContext *pGS = static_cast<CGameContext*>(pArg);
+	int top = pGS->m_RankThreadTop - 1;
+	int r = top;
+	if (top == -1) // top5 0 is same as top5 1
+		top = r = 0;
+	dbg_msg("top_thread", "init top thread gs=%p rankthreadtop=%d top=%d", pGS, pGS->m_RankThreadTop, top);
+	char aFilename[MAX_FILE_LEN];
+	if (escape_filename(aFilename, sizeof(aFilename), pGS->m_aRankThreadName))
+	{
+		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] save failed: escape error.");
+		err = 1; goto end;
+	}
+	pDir = opendir(g_Config.m_SvStatsPath);
+	if(pDir == NULL)
+	{
+		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] failed to open directory '%s'.", g_Config.m_SvStatsPath);
+		err = 1; goto end;
+	}
+	while ((pDe = readdir(pDir)) != NULL)
+	{
+		if (str_endswith(pDe->d_name, ".lck"))
+		{
+			dbg_msg("top_thread", "file '%s' is locked by write.", pDe->d_name);
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] top command failed try again later.");
+			err = 1; goto end;
+		}
+		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
+		{
+			// printf("ignore '%s'.\n", pDe->d_name);
+			continue;
+		}
+		if (!str_endswith(pDe->d_name, ".acc"))
+		{
+			// printf("warning not a .acc file '%s'.\n", pDe->d_name);
+			continue;
+		}
+		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
+		// printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
+		CFngStats *pStats = (struct CFngStats*)malloc(sizeof(struct CFngStats));
+		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
+		if (load)
+		{
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
+			free(pStats);
+			err = 1; goto end;
+		}
+		pStats->m_Tmp = pGS->CalcScore(pStats);
+		m_vpStats.push_back(pStats);
+		// dbg_msg("top_thread", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
+	}
+	closedir(pDir);
+	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpTmp);
+	// negative top = starting from worst
+	if (top < 0)
+	{
+		top -= 3;
+		start = m_vpStats.size() + top;
+		r = start;
+		// dbg_msg("top_thread", "%d - %lu", start, m_vpStats.size());
+		if (start < 0)
+		{
+			dbg_msg("top_thread", "start=%d is negative aborting...", start);
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] argument too low");
+			err = 1; goto end;
+		}
+		for(std::vector<CFngStats*>::size_type i = start; i < m_vpStats.size(); i++)
+		{
+			if (++r > start+5)
+				break;
+			str_format(
+				pGS->m_aRankThreadResult[row_index], sizeof(pGS->m_aRankThreadResult[row_index]),
+				"%lu. '%s' score %d",
+				i+1, m_vpStats[i]->m_aName, pGS->CalcScore(m_vpStats[i])
+			);
+			row_index++;
+		}
+	}
+	else
+	{
+		for(std::vector<CFngStats*>::size_type i = top; i < m_vpStats.size(); i++)
+		{
+			if (++r > top+5)
+				break;
+			str_format(
+				pGS->m_aRankThreadResult[row_index], sizeof(pGS->m_aRankThreadResult[row_index]),
+				"%d. '%s' score %d",
+				r, m_vpStats[i]->m_aName, pGS->CalcScore(m_vpStats[i])
+			);
+			row_index++;
+		}
+	}
+	end:
+	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
+		free(m_vpStats[i]);
+	pGS->m_RankThreadState = err ? RT_ERR : RT_DONE;
+}
+
 void CGameContext::RankThread(void *pArg)
 {
 	DIR *pDir;
@@ -1795,57 +1922,57 @@ void CGameContext::RankThread(void *pArg)
 	char aFilePath[MAX_FILE_PATH];
 	std::vector<CFngStats*> m_vpStats;
 	CGameContext *pGS = static_cast<CGameContext*>(pArg);
-	dbg_msg("solofng", "init rank thread gs=%p name=%s", pGS, pGS->m_aRankThreadName);
+	dbg_msg("rank_thread", "init rank thread gs=%p name=%s", pGS, pGS->m_aRankThreadName);
 	CFngStats Stats;
 	if (pGS->LoadStats(-1, pGS->m_aRankThreadName, &Stats) != 0)
 	{
-		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
+		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
 		goto end;
 	}
 
 	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), pGS->m_aRankThreadName))
 	{
-		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] save failed: escape error.");
+		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] save failed: escape error.");
 		goto end;
 	}
 	pDir = opendir(g_Config.m_SvStatsPath);
 	if(pDir == NULL)
 	{
-		str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] failed to open directory '%s'.", g_Config.m_SvStatsPath);
+		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] failed to open directory '%s'.", g_Config.m_SvStatsPath);
 		goto end;
 	}
 	while ((pDe = readdir(pDir)) != NULL)
 	{
 		if (str_endswith(pDe->d_name, ".lck"))
 		{
-			dbg_msg("rank", "file '%s' is locked by write.", pDe->d_name);
-			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
+			dbg_msg("rank_thread", "file '%s' is locked by write.", pDe->d_name);
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
 			goto end;
 		}
 		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
 		{
-			printf("ignore '%s'.\n", pDe->d_name);
+			// printf("ignore '%s'.\n", pDe->d_name);
 			continue;
 		}
 		if (!str_endswith(pDe->d_name, ".acc"))
 		{
-			printf("warning not a .acc file '%s'.\n", pDe->d_name);
+			// printf("warning not a .acc file '%s'.\n", pDe->d_name);
 			continue;
 		}
 		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
-		printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
+		// printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
 		CFngStats *pStats = (struct CFngStats*)malloc(sizeof(struct CFngStats));
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
-			str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "[stats] rank command failed try again later.");
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
 			free(pStats);
 			goto end;
 		}
 		pStats->m_Tmp = pGS->CalcScore(pStats);
 		m_vpStats.push_back(pStats);
-		// dbg_msg("rank", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
+		// dbg_msg("rank_thread", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
 	}
 	closedir(pDir);
 	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpTmp);
@@ -1868,13 +1995,31 @@ void CGameContext::RankThread(void *pArg)
 	}
 
 	Score = pGS->CalcScore(&Stats);
-	str_format(pGS->m_aRankThreadResult, sizeof(pGS->m_aRankThreadResult), "%d. '%s' score %d (requested by '%s')",
+	str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "%d. '%s' score %d (requested by '%s')",
 		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
 
 	end:
 	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
 		free(m_vpStats[i]);
 	pGS->m_RankThreadState = RT_DONE;
+}
+
+void CGameContext::ShowTopScore(int ClientID, int Top)
+{
+	if (m_RankThreadState != RT_IDLE)
+	{
+		SendChatTarget(ClientID, "[stats] rank is currently being requested try agian later.");
+		return;
+	}
+	m_RankThreadState = RT_ACTIVE;
+	m_RankThreadTop = Top;
+	m_RankThreadReqID =  ClientID;
+	m_RankThreadType = TYPE_TOP;
+	for (int i = 0; i < 5; i++)
+		m_aRankThreadResult[i][0] = '\0';
+	void *pt = thread_init(TopThread, this);
+	if (!pt)
+		SendChatTarget(ClientID, "[stats] failed to spawn thread.");
 }
 
 void CGameContext::ShowRank(int ClientID, const char *pName)
@@ -1884,17 +2029,20 @@ void CGameContext::ShowRank(int ClientID, const char *pName)
 		SendChatTarget(ClientID, "[stats] rank is currently being requested try agian later.");
 		return;
 	}
+	m_RankThreadState = RT_ACTIVE;
 	char aName[64];
 	str_copy(aName, pName, sizeof(aName));
 	str_clean_whitespaces_simple(aName);
 
-	m_RankThreadState = RT_ACTIVE;
-	str_copy(m_aRankThreadResult, "[stats] something went wrong.", sizeof(m_aRankThreadResult));
+	m_RankThreadTop = 0;
+	m_RankThreadReqID = ClientID;
+	m_RankThreadType = TYPE_RANK;
+	str_copy(m_aRankThreadResult[0], "[stats] something went wrong.", sizeof(m_aRankThreadResult[0]));
 	str_copy(m_aRankThreadName, aName, sizeof(m_aRankThreadName));
 	str_copy(m_aRankThreadRequestName, Server()->ClientName(ClientID), sizeof(m_aRankThreadRequestName));
 	void *pt = thread_init(RankThread, this);
 	if (!pt)
-		SendChatTarget(ClientID, "[stats] failed to spwan thread.");
+		SendChatTarget(ClientID, "[stats] failed to spawn thread.");
 }
 
 int CGameContext::CalcScore(const CFngStats *pStats)
@@ -2055,7 +2203,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("cmdlist", pFullCmd))
 	{
-		SendChatTarget(ClientID, "commands: stats, round, cmdlist, help, info, config");
+		SendChatTarget(ClientID, "commands: stats, top5, round, cmdlist, help, info, config");
 		if (Server()->IsAuthed(ClientID))
 			SendChatTarget(ClientID, "admin: meta, save");
 	}
@@ -2076,6 +2224,25 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 			return;
 		}
 		ShowStats(ClientID, pFullCmd+6);
+	}
+	else if(!str_comp_nocase("top5", pFullCmd))
+	{
+		if (!g_Config.m_SvStats || !g_Config.m_SvAllowRankCmds)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
+		ShowTopScore(ClientID);
+	}
+	else if(!str_comp_nocase_num("top5 ", pFullCmd, 5))
+	{
+		if (!g_Config.m_SvStats || !g_Config.m_SvAllowRankCmds)
+		{
+			SendChatTarget(ClientID, "[stats] deactivated by admin.");
+			return;
+		}
+		int Top = atoi(pFullCmd+5);
+		ShowTopScore(ClientID, Top);
 	}
 	else if(!str_comp_nocase("rank", pFullCmd))
 	{
