@@ -766,7 +766,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weapon, CCharacter *pFrom)
 {
-	if (Weapon == WEAPON_HAMMER && pFrom)
+	if (Weapon == WEAPON_HAMMER && pFrom && pFrom->GetPlayer() && pFrom->GetPlayer()->m_IsFngHammer)
 	{
 		vec2 Dir;
 		if (length(m_Pos - pFrom->m_Pos) > 0.0f)

@@ -2039,6 +2039,9 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 {
 	dbg_msg("chat_cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
 	char aBuf[1024];
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	if (!pPlayer)
+		return;
 	if(!str_comp_nocase(pFullCmd, "help") || !str_comp_nocase(pFullCmd, "info"))
 	{
 		str_format(aBuf, sizeof(aBuf), "solofng by ChillerDragon - v%s", FNG_VERSION);
@@ -2116,9 +2119,48 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("list", pFullCmd))
 	{
-		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "Online: %d Ingame: %d", CountPlayers(), CountIngamePlayers());
 		SendChatTarget(ClientID, aBuf);
+	}
+	else if(!str_comp_nocase("config", pFullCmd))
+	{
+		SendChatTarget(ClientID, "Usage: /config <config> <value>");
+		SendChatTarget(ClientID, "Configs: hammer");
+		SendChatTarget(ClientID, "-	Values: fng, vanilla");
+		SendChatTarget(ClientID, "Example: /config hammer vanilla");
+	}
+	else if(!str_comp_nocase_num("config ", pFullCmd, 7))
+	{
+		char aCfg[16];
+		str_copy(aCfg, pFullCmd+7, sizeof(aCfg));
+		if(!str_comp_nocase("hammer", aCfg))
+		{
+			str_format(aBuf, sizeof(aBuf), "[config] hammer tune is set to '%s'", pPlayer->m_IsFngHammer ? "fng" : "vanilla");
+			SendChatTarget(ClientID, aBuf);
+		}
+		else if(!str_comp_nocase_num("hammer ", aCfg, 7))
+		{
+			char aValue[16];
+			str_copy(aValue, aCfg+7, sizeof(aValue));
+			if (!str_comp_nocase(aValue, "fng"))
+			{
+				SendChatTarget(ClientID, "[config] hammer tune set to fng.");
+				pPlayer->m_IsFngHammer = true;
+			}
+			else if (!str_comp_nocase(aValue, "vanilla"))
+			{
+				SendChatTarget(ClientID, "[config] hammer tune set to vanilla.");
+				pPlayer->m_IsFngHammer = false;
+			}
+			else
+			{
+				SendChatTarget(ClientID, "[config] invalid value use of those: fng, vanilla");
+			}
+		}
+		else
+		{
+			SendChatTarget(ClientID, "[config] invalid config use one of those: hammer");
+		}
 	}
 #ifdef CONF_DEBUG
 	else if(!str_comp_nocase("crash", pFullCmd))
