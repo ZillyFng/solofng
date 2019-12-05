@@ -2051,7 +2051,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	}
 	else if(!str_comp_nocase("cmdlist", pFullCmd))
 	{
-		SendChatTarget(ClientID, "commands: stats, round, cmdlist, help, info");
+		SendChatTarget(ClientID, "commands: stats, round, cmdlist, help, info, config");
 		if (Server()->IsAuthed(ClientID))
 			SendChatTarget(ClientID, "admin: meta, save");
 	}
