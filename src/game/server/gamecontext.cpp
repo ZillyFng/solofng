@@ -1833,10 +1833,15 @@ void CGameContext::TopThread(void *pArg)
 		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
 		// printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
 		CFngStats *pStats = (struct CFngStats*)malloc(sizeof(struct CFngStats));
+		if (!pStats)
+		{
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] top command failed (malloc).");
+			err = 1; goto end;
+		}
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
-			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] top command failed try again later.");
 			free(pStats);
 			err = 1; goto end;
 		}
@@ -1942,6 +1947,11 @@ void CGameContext::RankThread(void *pArg)
 		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
 		// printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
 		CFngStats *pStats = (struct CFngStats*)malloc(sizeof(struct CFngStats));
+		if (!pStats)
+		{
+			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed (malloc).");
+			goto end;
+		}
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
