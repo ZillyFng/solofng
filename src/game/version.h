@@ -11,5 +11,6 @@
 #define FNG_MAGIC_LEN 4
 static const char FNG_VERSION[FNG_VERSION_LEN] = "1.2.0-dev";
 static const char FNG_MAGIC[FNG_MAGIC_LEN] = "FNG";
+#define SETTINGS_FILENAME "settings07"
 static const char GAME_RELEASE_VERSION[8] = "0.7.3.1";
 #endif
