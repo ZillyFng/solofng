@@ -675,7 +675,7 @@ bool CPlayer::SaveStats(const char *pFilePath)
 	// Windows has own lock system (note by ChillerDragon)
 	while(1)
 	{
-		fd = open(aLockPath, O_CREAT);
+		fd = open(aLockPath, O_CREAT, S_IRUSR|S_IWUSR);
 		flock(fd, LOCK_EX);
 
 		fstat(fd, &st0);
