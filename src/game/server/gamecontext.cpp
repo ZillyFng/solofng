@@ -1902,6 +1902,7 @@ void CGameContext::RankThread(void *pArg)
 	struct dirent *pDe;
 	int Rank;
 	int Score;
+	int err = 0;
 	int load;
 	char aFilePath[MAX_FILE_PATH];
 	std::vector<CFngStats*> m_vpStats;
@@ -1911,20 +1912,20 @@ void CGameContext::RankThread(void *pArg)
 	if (pGS->LoadStats(-1, pGS->m_aRankThreadName, &Stats) != 0)
 	{
 		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] player '%s' is not ranked yet.", pGS->m_aRankThreadName);
-		goto end;
+		err = 1; goto end;
 	}
 
 	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), pGS->m_aRankThreadName))
 	{
 		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] save failed: escape error.");
-		goto end;
+		err = 1; goto end;
 	}
 	pDir = opendir(g_Config.m_SvStatsPath);
 	if(pDir == NULL)
 	{
 		str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] failed to open directory '%s'.", g_Config.m_SvStatsPath);
-		goto end;
+		err = 1; goto end;
 	}
 	while ((pDe = readdir(pDir)) != NULL)
 	{
@@ -1932,7 +1933,7 @@ void CGameContext::RankThread(void *pArg)
 		{
 			dbg_msg("rank_thread", "file '%s' is locked by write.", pDe->d_name);
 			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
-			goto end;
+			err = 1; goto end;
 		}
 		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
 		{
@@ -1950,14 +1951,14 @@ void CGameContext::RankThread(void *pArg)
 		if (!pStats)
 		{
 			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed (malloc).");
-			goto end;
+			err = 1; goto end;
 		}
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
 			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
 			free(pStats);
-			goto end;
+			err = 1; goto end;
 		}
 		pStats->m_Tmp = pGS->CalcScore(pStats);
 		m_vpStats.push_back(pStats);
@@ -1990,7 +1991,7 @@ void CGameContext::RankThread(void *pArg)
 	end:
 	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
 		free(m_vpStats[i]);
-	pGS->m_RankThreadState = RT_DONE;
+	pGS->m_RankThreadState = err ? RT_ERR : RT_DONE;
 }
 
 void CGameContext::ShowTopScore(int ClientID, int Top)
