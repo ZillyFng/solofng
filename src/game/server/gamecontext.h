@@ -190,6 +190,7 @@ public:
 
 	// solofng
 
+	int m_FailedStatSaves;
 	void RankThreadTick();
 	void SolofngTick();
 	static void RankThread(void *pArg);

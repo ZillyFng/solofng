@@ -669,12 +669,15 @@ bool CPlayer::SaveStats(const char *pFilePath)
 	pFile = fopen(pFilePath, "wb");
 	char aLockPath[2048+4];
 	str_format(aLockPath, sizeof(aLockPath), "%s.lck", pFilePath);
+	int trys = 0;
+	int max_trys = 16;
 	// lock file code by user2769258 and Arnaud Le Blanc
 	// https://stackoverflow.com/a/18745264
 	// Not portable! E.g. on Windows st_ino is always 0. – rustyx Nov 8 '17 at 18:35
 	// Windows has own lock system (note by ChillerDragon)
 	while(1)
 	{
+		trys++;
 		fd = open(aLockPath, O_CREAT, S_IRUSR|S_IWUSR);
 		flock(fd, LOCK_EX);
 
@@ -682,8 +685,15 @@ bool CPlayer::SaveStats(const char *pFilePath)
 		stat(aLockPath, &st1);
 		if(st0.st_ino == st1.st_ino) break;
 
-		dbg_msg("stats", "wait for locked file...");
+		dbg_msg("stats", "wait for locked file %d/%d...", trys, max_trys);
 		close(fd);
+		if (trys > max_trys)
+		{
+			pFile = NULL;
+			GameServer()->m_FailedStatSaves++;
+			GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file locked.");
+			return false;
+		}
 	}
 #endif
 	if(!pFile)

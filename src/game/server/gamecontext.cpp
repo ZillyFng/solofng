@@ -50,6 +50,10 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+
+	// solofng
+
+	m_FailedStatSaves = 0;
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -2198,7 +2202,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	{
 		SendChatTarget(ClientID, "commands: stats, top5, round, cmdlist, help, info, config");
 		if (Server()->IsAuthed(ClientID))
-			SendChatTarget(ClientID, "admin: meta, save");
+			SendChatTarget(ClientID, "admin: meta, save, admin");
 	}
 	else if(!str_comp_nocase("stats", pFullCmd))
 	{
@@ -2326,6 +2330,23 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 		else
 		{
 			SendChatTarget(ClientID, "[config] invalid config use one of those: hammer");
+		}
+	}
+	else if(!str_comp_nocase("admin", pFullCmd))
+	{
+		if (!Server()->IsAuthedAdmin(ClientID))
+		{
+			SendChatTarget(ClientID, "missing permission.");
+			return;
+		}
+		if (m_FailedStatSaves)
+		{
+			str_format(aBuf, sizeof(aBuf), "Failed stat saves: %d", m_FailedStatSaves);
+			SendChatTarget(ClientID, aBuf);
+		}
+		else
+		{
+			SendChatTarget(ClientID, "No failed stat saves so far.");
 		}
 	}
 #ifdef CONF_DEBUG
