@@ -1848,6 +1848,7 @@ void CGameContext::TopThread(void *pArg)
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
+			dbg_msg("top_thread", "file '%s' failed to load with err=%d", aFilePath, load);
 			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] top command failed try again later.");
 			free(pStats);
 			err = 1; goto end;
