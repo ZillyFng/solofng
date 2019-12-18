@@ -116,6 +116,7 @@ MACRO_CONFIG_INT(SvMeltHammerScaleX, sv_melt_hammer_scale_x, 50, 1, 1000, CFGFLA
 MACRO_CONFIG_INT(SvMeltHammerScaleY, sv_melt_hammer_scale_y, 50, 1, 1000, CFGFLAG_SERVER, "linearly scale up hammer y power, percentage, for hammering frozen teammates")
 MACRO_CONFIG_INT(SvFreezeDelay, sv_freeze_delay, 9, 1, 30, CFGFLAG_SERVER, "How many seconds the players will remain frozen")
 MACRO_CONFIG_STR(SvStatsPath, sv_stats_path, 512, "stats", CFGFLAG_SERVER, "path to solofng stats directory")
+MACRO_CONFIG_STR(SvStatsFailPath, sv_stats_fail_path, 512, "stats_failed", CFGFLAG_SERVER, "path to solofng failed stats directory")
 MACRO_CONFIG_INT(SvSpreePlayers, sv_spree_players, 5, 1, 60, CFGFLAG_SERVER, "how many players have to be online to count killingsprees")
 MACRO_CONFIG_INT(SvSaveOnSignal, sv_save_on_signal, 1, 0, 2, CFGFLAG_SERVER, "0=off 1=int/ill/fpe/abrt 2=1/segv")
 MACRO_CONFIG_INT(SvStats, sv_stats, 1, 0, 1, CFGFLAG_SERVER, "0=off 1=use file stats (sv_stats_path is related)")

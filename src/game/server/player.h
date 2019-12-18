@@ -151,7 +151,7 @@ public:
 	const CFngStats *GetRoundStats() { return &m_RoundStats; }
 	bool m_InitedRoundStats;
 	void InitRoundStats();
-	bool SaveStats(const char *pFilePath);
+	bool SaveStats(const char *pFilePath, bool Failed = false);
 
 	void SetConfig(int Cfg);
 	void UnsetConfig(int Cfg);

@@ -640,7 +640,7 @@ void CPlayer::InitRoundStats()
 	m_RoundStats.m_LastSeen = time(NULL);
 }
 
-bool CPlayer::SaveStats(const char *pFilePath)
+bool CPlayer::SaveStats(const char *pFilePath, bool Failed)
 {
 	InitRoundStats();
 	// 'foo's killingspree was ended by 'foo'
@@ -690,9 +690,14 @@ bool CPlayer::SaveStats(const char *pFilePath)
 		if (trys > max_trys)
 		{
 			pFile = NULL;
-			GameServer()->m_FailedStatSaves++;
-			GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file locked.");
-			return false;
+			GameServer()->m_StatSaveFails++;
+			if (Failed)
+			{
+				GameServer()->m_StatSaveCriticalFails++;
+				GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file locked.");
+				return false;
+			}
+			return GameServer()->SaveStats(m_ClientID, true);
 		}
 	}
 #endif

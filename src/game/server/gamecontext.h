@@ -190,7 +190,8 @@ public:
 
 	// solofng
 
-	int m_FailedStatSaves;
+	int m_StatSaveFails;
+	int m_StatSaveCriticalFails;
 	void RankThreadTick();
 	void SolofngTick();
 	static void RankThread(void *pArg);
@@ -223,8 +224,9 @@ public:
 
 		Parameters:
 			ClientID - id of stats player
+			Failed - is this a recover attempt of a failed stat save
 	*/
-	bool SaveStats(int ClientID);
+	bool SaveStats(int ClientID, bool Failed = false);
 	/*
 	Function: LoadStats
 		Loads fng stats from file
@@ -288,6 +290,9 @@ public:
 	void ShowRank(int ClientID, const char *pName);
 	void ShowTopScore(int ClientID, int Top = 1);
 	int CalcScore(const CFngStats *pStats);
+	int TestSavePath(const char *pPath);
+	int TestSaveStats();
+	void MergeFailedStats(int ClientID);
 	int CountPlayers();
 	int CountIngamePlayers();
 	void PrintStatsMeta(int ClientID, const CFngStats *pStats);

@@ -15,6 +15,13 @@
 #include <game/gamecore.h>
 #include <game/version.h>
 
+#if defined(CONF_FAMILY_UNIX)
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
+
 #include "entities/character.h"
 #include "entities/projectile.h"
 #include "gamemodes/ctf.h"
@@ -53,7 +60,8 @@ void CGameContext::Construct(int Resetting)
 
 	// solofng
 
-	m_FailedStatSaves = 0;
+	m_StatSaveFails = 0;
+	m_StatSaveCriticalFails = 0;
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -1622,6 +1630,11 @@ void CGameContext::OnInit()
 			OnClientConnected(Server()->MaxClients() -i-1, true, false);
 	}
 #endif
+
+	// solofng
+
+	if (TestSaveStats())
+		exit(1);
 }
 
 void CGameContext::OnShutdown()
@@ -1857,7 +1870,6 @@ void CGameContext::TopThread(void *pArg)
 		m_vpStats.push_back(pStats);
 		// dbg_msg("top_thread", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
 	}
-	closedir(pDir);
 	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpTmp);
 	// negative top = starting from worst
 	if (top < 0)
@@ -1899,6 +1911,7 @@ void CGameContext::TopThread(void *pArg)
 		}
 	}
 	end:
+	closedir(pDir);
 	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
 		free(m_vpStats[i]);
 	pGS->m_RankThreadState = err ? RT_ERR : RT_DONE;
@@ -1972,7 +1985,6 @@ void CGameContext::RankThread(void *pArg)
 		m_vpStats.push_back(pStats);
 		// dbg_msg("rank_thread", "pushing back '%s' kills: %d", pStats->m_aName, pStats->m_Kills);
 	}
-	closedir(pDir);
 	std::sort(m_vpStats.begin(), m_vpStats.end(), cmpTmp);
 	// TOP5
 	/*
@@ -1997,6 +2009,7 @@ void CGameContext::RankThread(void *pArg)
 		Rank, pGS->m_aRankThreadName, Score, pGS->m_aRankThreadRequestName);
 
 	end:
+	closedir(pDir);
 	for(std::vector<CFngStats*>::size_type i = 0; i != m_vpStats.size(); i++)
 		free(m_vpStats[i]);
 	pGS->m_RankThreadState = err ? RT_ERR : RT_DONE;
@@ -2077,7 +2090,7 @@ void CGameContext::MergeStats(const CFngStats *pFrom, CFngStats *pTo)
 	pTo->m_TotalOnlineTime += pFrom->m_TotalOnlineTime;
 }
 
-bool CGameContext::SaveStats(int ClientID)
+bool CGameContext::SaveStats(int ClientID, bool Failed)
 {
 	if (!g_Config.m_SvStats)
 		return false;
@@ -2087,12 +2100,16 @@ bool CGameContext::SaveStats(int ClientID)
 	char aFilename[MAX_FILE_LEN];
 	if (escape_filename(aFilename, sizeof(aFilename), Server()->ClientName(ClientID)))
 	{
-		SendChatTarget(ClientID, "[stats] save failed: escape error.");
+		SendChatTarget(ClientID,
+			Failed ?
+			"[stats] save failed: escape error." :
+			"[stats] recover save failed: escape error." // should be impossible to reach
+		);
 		return false;
 	}
 	char aFilePath[2048];
-	str_format(aFilePath, sizeof(aFilePath), "%s/%s.acc", g_Config.m_SvStatsPath, aFilename);
-	return pPlayer->SaveStats(aFilePath);
+	str_format(aFilePath, sizeof(aFilePath), "%s/%s.acc", Failed ? g_Config.m_SvStatsFailPath : g_Config.m_SvStatsPath, aFilename);
+	return pPlayer->SaveStats(aFilePath, Failed);
 }
 
 bool CGameContext::IsFngMagic(const char *pMagic, int Size)
@@ -2186,6 +2203,169 @@ int CGameContext::LoadStatsFile(int ClientID, const char *pPath, CFngStats *pSta
 	return err;
 }
 
+int CGameContext::TestSavePath(const char *pPath)
+{
+	FILE *pFile;
+	pFile = fopen(pPath, "wb");
+	if (!pFile)
+		return 1;
+	char x = 'x';
+	if (!fwrite(&x, sizeof(x), 1, pFile))
+		return 2;
+	fclose(pFile);
+	pFile = fopen(pPath, "rb");
+	if (!pFile)
+		return 3;
+	if (!fread(&x, sizeof(x), 1, pFile))
+		return 4;
+	fclose(pFile);
+	if (x != 'x')
+		return 5;
+	if (remove(pPath))
+		return 6;
+	return 0;
+}
+
+int CGameContext::TestSaveStats()
+{
+	char aPath[1024];
+	int err = 0;
+	str_format(aPath, sizeof(aPath), "%s/%s", g_Config.m_SvStatsPath, "remove_me.test");
+	err = TestSavePath(aPath);
+	if (err)
+	{
+		dbg_msg("solofng", "test stats path failed with err=%d path='%s'", err, aPath);
+		return err;
+	}
+	str_format(aPath, sizeof(aPath), "%s/%s", g_Config.m_SvStatsFailPath, "remove_me.test");
+	err = TestSavePath(aPath);
+	if (err)
+	{
+		dbg_msg("solofng", "test stats path failed with err=%d path='%s'", err, aPath);
+		return err;
+	}
+	return 0;
+}
+
+void CGameContext::MergeFailedStats(int ClientID)
+{
+	DIR *pDir;
+	struct dirent *pDe;
+	int total = 0;
+	int merged = 0;
+	pDir = opendir(g_Config.m_SvStatsFailPath);
+	if(pDir == NULL)
+	{
+		dbg_msg("merge_stats", "failed to open directory '%s'.", g_Config.m_SvStatsFailPath);
+		SendChatTarget(ClientID, "[stats] failed to open directory.");
+		return;
+	}
+	while ((pDe = readdir(pDir)) != NULL)
+	{
+		if (str_endswith(pDe->d_name, ".lck"))
+		{
+			dbg_msg("merge_stats", "file '%s' is locked by write.", pDe->d_name);
+			// err = 1; goto end;
+			continue;
+		}
+		if (!str_comp(pDe->d_name, ".") || !str_comp(pDe->d_name, ".."))
+		{
+			// printf("ignore '%s'.\n", pDe->d_name);
+			continue;
+		}
+		if (!str_endswith(pDe->d_name, ".acc"))
+		{
+			// printf("warning not a .acc file '%s'.\n", pDe->d_name);
+			continue;
+		}
+		total++;
+		char aFilePath[2048];
+		char aSavePath[2048];
+		str_format(aFilePath, sizeof(aFilePath), "%s/%s", g_Config.m_SvStatsFailPath, pDe->d_name);
+		str_format(aSavePath, sizeof(aSavePath), "%s/%s", g_Config.m_SvStatsPath, pDe->d_name);
+		// printf("load stats '%s' '%s' ... \n", pDe->d_name, aFilePath);
+		CFngStats Stats;
+		int load = LoadStatsFile(-1, aFilePath, &Stats);
+		if (load)
+		{
+			dbg_msg("merge_stats", "file '%s' failed to load with err=%d", aFilePath, load);
+			// err = 1; goto end;
+			continue;
+		}
+		CFngStats *pMergeStats;
+		CFngStats FileStats;
+		bool HasStast = LoadStatsFile(-1, aSavePath, &FileStats) == 0;
+		if (!HasStast)
+		{
+			// just copy failed stats over
+			pMergeStats = &Stats;
+		}
+		else
+		{
+			MergeStats(&Stats, &FileStats);
+			pMergeStats = &FileStats;
+		}
+
+		FILE *pFile;
+	#if defined(CONF_FAMILY_UNIX)
+		int fd;
+		struct stat st0, st1;
+		pFile = fopen(aSavePath, "wb");
+		char aLockPath[2048+4];
+		str_format(aLockPath, sizeof(aLockPath), "%s.lck", aSavePath);
+		int trys = 0;
+		int max_trys = 16;
+		// lock file code by user2769258 and Arnaud Le Blanc
+		// https://stackoverflow.com/a/18745264
+		// Not portable! E.g. on Windows st_ino is always 0. – rustyx Nov 8 '17 at 18:35
+		// Windows has own lock system (note by ChillerDragon)
+		while(1)
+		{
+			trys++;
+			fd = open(aLockPath, O_CREAT, S_IRUSR|S_IWUSR);
+			flock(fd, LOCK_EX);
+
+			fstat(fd, &st0);
+			stat(aLockPath, &st1);
+			if(st0.st_ino == st1.st_ino) break;
+
+			dbg_msg("stats_merge", "wait for locked file %d/%d...", trys, max_trys);
+			close(fd);
+			if (trys > max_trys)
+			{
+				pFile = NULL;
+				dbg_msg("stats_merge", "save failed: file locked '%s'", aSavePath);
+				continue;
+			}
+		}
+	#endif
+		if(!pFile)
+		{
+			dbg_msg("stats_merge", "save failed: file open '%s'", aSavePath);
+			continue;
+		}
+		fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
+		fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
+		fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
+		fclose(pFile);
+	#if defined(CONF_FAMILY_UNIX)
+		unlink(aLockPath);
+		flock(fd, LOCK_UN);
+	#endif
+		merged++;
+		dbg_msg("merge_stats", "saved stats to file '%s' (%s)", aSavePath, HasStast ? "merge" : "new");
+		if (remove(aFilePath))
+		{
+			dbg_msg("merge_stats", "ERROR: failed to remove stats file! '%s'", aFilePath);
+			exit(1);
+		}
+	}
+	closedir(pDir);
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "[stats] merged %d/%d failed stats to main database.", merged, total);
+	SendChatTarget(ClientID, aBuf);
+}
+
 void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 {
 	dbg_msg("chat_cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
@@ -2203,7 +2383,7 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 	{
 		SendChatTarget(ClientID, "commands: stats, top5, round, cmdlist, help, info, config");
 		if (Server()->IsAuthed(ClientID))
-			SendChatTarget(ClientID, "admin: meta, save, admin");
+			SendChatTarget(ClientID, "admin: meta, save, admin, merge_failed");
 	}
 	else if(!str_comp_nocase("stats", pFullCmd))
 	{
@@ -2340,15 +2520,24 @@ void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 			SendChatTarget(ClientID, "missing permission.");
 			return;
 		}
-		if (m_FailedStatSaves)
+		if (m_StatSaveFails || m_StatSaveCriticalFails)
 		{
-			str_format(aBuf, sizeof(aBuf), "Failed stat saves: %d", m_FailedStatSaves);
+			str_format(aBuf, sizeof(aBuf), "[stats] fails: %d critical fails: %d", m_StatSaveFails, m_StatSaveCriticalFails);
 			SendChatTarget(ClientID, aBuf);
 		}
 		else
 		{
-			SendChatTarget(ClientID, "No failed stat saves so far.");
+			SendChatTarget(ClientID, "[stats] all saves successful.");
 		}
+	}
+	else if(!str_comp_nocase("merge_failed", pFullCmd))
+	{
+		if (!Server()->IsAuthedAdmin(ClientID))
+		{
+			SendChatTarget(ClientID, "missing permission.");
+			return;
+		}
+		MergeFailedStats(ClientID);
 	}
 #ifdef CONF_DEBUG
 	else if(!str_comp_nocase("crash", pFullCmd))
