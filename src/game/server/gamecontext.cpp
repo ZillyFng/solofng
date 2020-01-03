@@ -1977,6 +1977,7 @@ void CGameContext::RankThread(void *pArg)
 		load = pGS->LoadStatsFile(-1, aFilePath, pStats);
 		if (load)
 		{
+			dbg_msg("rank_thread", "file '%s' failed to load (err=%d)", aFilePath, load);
 			str_format(pGS->m_aRankThreadResult[0], sizeof(pGS->m_aRankThreadResult[0]), "[stats] rank command failed try again later.");
 			free(pStats);
 			err = 1; goto end;
