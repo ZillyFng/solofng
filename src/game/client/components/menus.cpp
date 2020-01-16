@@ -793,7 +793,7 @@ float CMenus::DoScrollbarV(const void *pID, const CUIRect *pRect, float Current)
 {
 	CUIRect Handle;
 	static float OffsetY;
-	pRect->HSplitTop(min(pRect->h/8.0f, 33.0f), &Handle, 0);
+	pRect->HSplitTop(minimum(pRect->h/8.0f, 33.0f), &Handle, 0);
 
 	Handle.y += (pRect->h-Handle.h)*Current;
 
@@ -850,7 +850,7 @@ float CMenus::DoScrollbarH(const void *pID, const CUIRect *pRect, float Current)
 {
 	CUIRect Handle;
 	static float OffsetX;
-	pRect->VSplitLeft(min(pRect->w/8.0f, 33.0f), &Handle, 0);
+	pRect->VSplitLeft(minimum(pRect->w/8.0f, 33.0f), &Handle, 0);
 
 	Handle.x += (pRect->w-Handle.w)*Current;
 
@@ -1798,7 +1798,7 @@ int CMenus::Render()
 				BarHeight += 3.0f + 25.0f;
 			float VMargin = Screen.w/2-365.0f;
 			if(g_Config.m_UiWideview)
-				VMargin = min(VMargin, 60.0f);
+				VMargin = minimum(VMargin, 60.0f);
 
 			Screen.VMargin(VMargin, &MainView);
 			MainView.HSplitTop(BarHeight, &TabBar, &MainView);
