@@ -2383,7 +2383,7 @@ void CGameContext::MergeFailedStats(int ClientID)
 		dbg_msg("merge_stats", "saved stats to file '%s' (%s)", aSavePath, HasStast ? "merge" : "new");
 		if (remove(aFilePath))
 		{
-			dbg_msg("merge_stats", "ERROR: failed to remove stats file! '%s'", aFilePath);
+			dbg_msg("merge_stats", "error: failed to remove stats file! '%s'", aFilePath);
 			exit(1);
 		}
 	}
