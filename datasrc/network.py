@@ -1,6 +1,6 @@
 from datatypes import *
 
-Pickups = Enum("PICKUP", ["HEALTH", "ARMOR", "GRENADE", "SHOTGUN", "LASER", "NINJA"])
+Pickups = Enum("PICKUP", ["HEALTH", "ARMOR", "GRENADE", "SHOTGUN", "LASER", "NINJA", "GUN", "HAMMER"])
 Emotes = Enum("EMOTE", ["NORMAL", "PAIN", "HAPPY", "SURPRISE", "ANGRY", "BLINK"])
 Emoticons = Enum("EMOTICON", ["OOP", "EXCLAMATION", "HEARTS", "DROP", "DOTDOT", "MUSIC", "SORRY", "GHOST", "SUSHI", "SPLATTEE", "DEVILTEE", "ZOMG", "ZZZ", "WTF", "EYES", "QUESTION"])
 Votes = Enum("VOTE", ["UNKNOWN", "START_OP", "START_KICK", "START_SPEC", "END_ABORT", "END_PASS", "END_FAIL"]) # todo 0.8: add RUN_OP, RUN_KICK, RUN_SPEC; rem UNKNOWN
@@ -458,4 +458,20 @@ Messages = [
 	NetMessage("Sv_Checkpoint", [
 		NetIntAny("m_Diff"),
 	]),
+  
+        NetMessage("Sv_CommandInfo", [
+                NetStringStrict("m_pName"),
+                NetStringStrict("m_ArgsFormat"),
+                NetStringStrict("m_HelpText")
+        ]),
+
+        NetMessage("Sv_CommandInfoRemove", [
+                NetStringStrict("m_pName")
+        ]),
+
+        NetMessage("Cl_Command", [
+                NetStringStrict("m_Name"),
+                NetStringStrict("m_Arguments")
+        ]),
+  
 ]

@@ -137,6 +137,9 @@ void CInfoMessages::OnMessage(int MsgType, void *pRawMsg)
 
 void CInfoMessages::OnRender()
 {
+	if(!g_Config.m_ClShowhud)
+		return;
+
 	float Width = 400*3.0f*Graphics()->ScreenAspect();
 	float Height = 400*3.0f;
 
@@ -283,7 +286,7 @@ void CInfoMessages::RenderFinishMsg(const CInfoMsg *pInfoMsg, float x, float y) 
 
 	x -= TimeW;
 	if(pInfoMsg->m_NewRecord)
-		TextRender()->TextColor(0.0f, 0.5f, 1.0f, 1.0f);
+		TextRender()->TextColor(0.2f, 0.6f, 1.0f, 1.0f);
 	TextRender()->Text(0, x, y, FontSize, aTime, -1);
 
 	x -= 52.0f + 10.0f;
