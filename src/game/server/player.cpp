@@ -690,7 +690,6 @@ bool CPlayer::SaveStats(const char *pFilePath, bool Failed)
 		if (trys > max_trys)
 		{
 			dbg_msg("stats", "error: locked file (trys %d/%d) failed=%d path='%s'", trys, max_trys, Failed, aLockPath);
-			fclose(pFile);
 			pFile = NULL;
 			GameServer()->m_StatSaveFails++;
 			if (Failed)
