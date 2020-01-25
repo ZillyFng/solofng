@@ -1,6 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <stdio.h>
+#include <errno.h>
 #include <dirent.h>
 #include <base/math.h>
 #include <vector>
@@ -2188,7 +2189,7 @@ int CGameContext::LoadStatsFile(int ClientID, const char *pPath, CFngStats *pSta
 	pFile = fopen(pPath, "rb");
 	if (!pFile)
 	{
-		dbg_msg("load", "failed to load file '%s'", pPath); // TODO: remove
+		dbg_msg("load", "failed to load file '%s' errno=%d", pPath, errno); // TODO: remove
 		err = 1; goto fail;
 	}
 	char aMagic[4];
@@ -2338,6 +2339,11 @@ void CGameContext::MergeFailedStats(int ClientID)
 		int fd;
 		struct stat st0, st1;
 		pFile = fopen(aSavePath, "wb");
+		if(!pFile)
+		{
+			dbg_msg("stats_merge", "save failed: file open '%s' errno=%d", aSavePath, errno);
+			continue;
+		}
 		char aLockPath[2048+4];
 		str_format(aLockPath, sizeof(aLockPath), "%s.lck", aSavePath);
 		int trys = 0;
@@ -2366,11 +2372,6 @@ void CGameContext::MergeFailedStats(int ClientID)
 			}
 		}
 	#endif
-		if(!pFile)
-		{
-			dbg_msg("stats_merge", "save failed: file open '%s'", aSavePath);
-			continue;
-		}
 		fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
 		fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
 		fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);

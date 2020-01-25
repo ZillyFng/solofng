@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
 #include "stdio.h"
+#include "errno.h"
 #include <game/version.h>
 #include "entities/character.h"
 #include "entities/flag.h"
@@ -667,6 +668,12 @@ bool CPlayer::SaveStats(const char *pFilePath, bool Failed)
 	int fd;
 	struct stat st0, st1;
 	pFile = fopen(pFilePath, "wb");
+	if(!pFile)
+	{
+		dbg_msg("stats", "save failed: file open '%s' errno=%d", pFilePath, errno);
+		GameServer()->SendChatTarget(m_ClientID, "[stats] save failed.");
+		return false;
+	}
 	char aLockPath[2048+4];
 	str_format(aLockPath, sizeof(aLockPath), "%s.lck", pFilePath);
 	int trys = 0;
@@ -702,11 +709,6 @@ bool CPlayer::SaveStats(const char *pFilePath, bool Failed)
 		}
 	}
 #endif
-	if(!pFile)
-	{
-		GameServer()->SendChatTarget(m_ClientID, "[stats] save failed: file open.");
-		return false;
-	}
 	fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
 	fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
 	fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
