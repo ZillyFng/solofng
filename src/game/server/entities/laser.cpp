@@ -31,7 +31,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	m_Pos = At;
 	m_Energy = -1;
 	if(!pHit->m_FreezeTime)
-		pHit->TakeDamage(vec2(0.f, 0.f), normalize(To-From), 0, m_Owner, WEAPON_LASER);
+		pHit->TakeDamage(vec2(0.f, 0.f), normalize(To-From), 10, m_Owner, WEAPON_LASER);
 	return true;
 }
 
