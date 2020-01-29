@@ -60,7 +60,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = WEAPON_LASER;
+	if(!str_comp_nocase(g_Config.m_SvGametype, "bolofng"))
+		m_ActiveWeapon = WEAPON_GRENADE;
+	else
+		m_ActiveWeapon = WEAPON_LASER;
 	m_LastWeapon = WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
 
@@ -790,7 +793,7 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 	m_Core.m_Vel += Force;
 
 	m_LastToucherID = From;
-	if(!m_FreezeTime && Weapon == WEAPON_LASER)
+	if(!m_FreezeTime && (Weapon == WEAPON_LASER || Weapon == WEAPON_GRENADE))
 	{
 		CPlayer *pKiller = GameServer()->m_apPlayers[From];
 		if(pKiller)
