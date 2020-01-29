@@ -4,6 +4,9 @@
 #define GAME_VARIABLES_H
 #undef GAME_VARIABLES_H // this file will be included several times
 
+// zillyfng
+MACRO_CONFIG_INT(SvHitBoxDmg, sv_hitboxdmg, 3, 1, 10, CFGFLAG_SAVE|CFGFLAG_SERVER, "Min damage to count as hit")
+
 
 // client
 MACRO_CONFIG_INT(ClPredict, cl_predict, 1, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Predict client movements")
