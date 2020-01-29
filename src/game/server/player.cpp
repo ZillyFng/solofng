@@ -712,7 +712,12 @@ bool CPlayer::SaveStats(const char *pFilePath, bool Failed)
 	fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
 	fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
 	fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
-	fclose(pFile);
+	if(fclose(pFile))
+	{
+		dbg_msg("stats", "save failed: file close '%s' errno=%d", pFilePath, errno);
+		GameServer()->SendChatTarget(m_ClientID, "[stats] save failed.");
+		return false;
+	}
 #if defined(CONF_FAMILY_UNIX)
 	unlink(aLockPath);
 	flock(fd, LOCK_UN);

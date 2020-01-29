@@ -2221,7 +2221,8 @@ int CGameContext::LoadStatsFile(int ClientID, const char *pPath, CFngStats *pSta
 	{
 		err = 6; goto fail;
 	}
-	fclose(pFile);
+	if(fclose(pFile))
+		dbg_msg("load", "failed to close file '%s' errno=%d", pPath, errno);
 	return 0;
 	fail:
 	char aBuf[128];
@@ -2240,13 +2241,15 @@ int CGameContext::TestSavePath(const char *pPath)
 	char x = 'x';
 	if (!fwrite(&x, sizeof(x), 1, pFile))
 		return 2;
-	fclose(pFile);
+	if(fclose(pFile))
+		return errno;
 	pFile = fopen(pPath, "rb");
 	if (!pFile)
 		return 3;
 	if (!fread(&x, sizeof(x), 1, pFile))
 		return 4;
-	fclose(pFile);
+	if(fclose(pFile))
+		return errno;
 	if (x != 'x')
 		return 5;
 	if (remove(pPath))
@@ -2375,7 +2378,11 @@ void CGameContext::MergeFailedStats(int ClientID)
 		fwrite(&FNG_MAGIC, sizeof(FNG_MAGIC), 1, pFile);
 		fwrite(&FNG_VERSION, sizeof(FNG_VERSION), 1, pFile);
 		fwrite(pMergeStats, sizeof(*pMergeStats), 1, pFile);
-		fclose(pFile);
+		if(fclose(pFile))
+		{
+			dbg_msg("stats_merge", "save failed: file close '%s' errno=%d", aSavePath, errno);
+			continue;
+		}
 	#if defined(CONF_FAMILY_UNIX)
 		unlink(aLockPath);
 		flock(fd, LOCK_UN);
