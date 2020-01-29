@@ -796,7 +796,9 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 		return false;
 
 	m_LastToucherID = From;
-	if(!m_FreezeTime && (Weapon == WEAPON_LASER || Weapon == WEAPON_GRENADE))
+	if(m_FreezeTime)
+		return false;
+	if(Weapon == WEAPON_LASER || Weapon == WEAPON_GRENADE)
 	{
 		CPlayer *pKiller = GameServer()->m_apPlayers[From];
 		if(pKiller)
