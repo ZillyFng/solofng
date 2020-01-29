@@ -792,6 +792,9 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 	}
 	m_Core.m_Vel += Force;
 
+	if(From == m_pPlayer->GetCID())
+		return false;
+
 	m_LastToucherID = From;
 	if(!m_FreezeTime && (Weapon == WEAPON_LASER || Weapon == WEAPON_GRENADE))
 	{
