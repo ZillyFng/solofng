@@ -60,7 +60,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	if(!str_comp_nocase(g_Config.m_SvGametype, "bolofng"))
+	if(!str_comp_nocase(Config()->m_SvGametype, "bolofng"))
 		m_ActiveWeapon = WEAPON_GRENADE;
 	else
 		m_ActiveWeapon = WEAPON_LASER;
@@ -292,7 +292,7 @@ void CCharacter::FireWeapon()
 
 	vec2 ProjStartPos = m_Pos+Direction*GetProximityRadius()*0.75f;
 
-	if(g_Config.m_Debug)
+	if(Config()->m_Debug)
 	{
 		char aBuf[256];
 		str_format(aBuf, sizeof(aBuf), "shot player='%d:%s' team=%d weapon=%d", m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), m_pPlayer->GetTeam(), m_ActiveWeapon);
@@ -680,7 +680,7 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 	Killer = m_LastToucherID;
 	int IngamePlayers = GameServer()->CountIngamePlayers();
 	CPlayer *pKiller = GameServer()->m_apPlayers[Killer];
-	if (g_Config.m_SvSpreePlayers <= IngamePlayers)
+	if (Config()->m_SvSpreePlayers <= IngamePlayers)
 		m_pPlayer->HandleSpreeDeath(pKiller ? Server()->ClientName(pKiller->GetCID()) : "(invalid)");
 	if (!pKiller)
 	{
@@ -689,7 +689,7 @@ void CCharacter::FngSacrafice(int& Killer, int& Spike)
 		Spike = WEAPON_WORLD;
 		return;
 	}
-	if (g_Config.m_SvSpreePlayers <= IngamePlayers)
+	if (Config()->m_SvSpreePlayers <= IngamePlayers)
 		pKiller->HandleSpreeKill();
 	else if (++pKiller->m_InvalidSpree % 5 == 0)
 		GameServer()->SendChatTarget(pKiller->GetCID(), "Not enough players online to start a spree.");
@@ -738,7 +738,7 @@ void CCharacter::Die(int Killer, int Weapon)
 	CNetMsg_Sv_KillMsg Msg;
 	Msg.m_Victim = m_pPlayer->GetCID();
 	Msg.m_ModeSpecial = ModeSpecial;
-	for(int i = 0 ; i < Server()->MaxClients(); i++)
+	for(int i = 0 ; i < MAX_CLIENTS; i++)
 	{
 		if(!Server()->ClientIngame(i))
 			continue;
@@ -780,19 +780,19 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 		vec2 Push = vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
 		if (GameServer()->m_pController->IsTeamplay() && pFrom->GetPlayer() && m_pPlayer->GetTeam() == pFrom->GetPlayer()->GetTeam() && IsFreezed())
 		{
-			Push.x *= g_Config.m_SvMeltHammerScaleX*0.01f;
-			Push.y *= g_Config.m_SvMeltHammerScaleY*0.01f;
+			Push.x *= Config()->m_SvMeltHammerScaleX*0.01f;
+			Push.y *= Config()->m_SvMeltHammerScaleY*0.01f;
 		}
 		else
 		{
-			Push.x *= g_Config.m_SvHammerScaleX*0.01f;
-			Push.y *= g_Config.m_SvHammerScaleY*0.01f;
+			Push.x *= Config()->m_SvHammerScaleX*0.01f;
+			Push.y *= Config()->m_SvHammerScaleY*0.01f;
 		}
 		Force = Push;
 	}
 	m_Core.m_Vel += Force;
 
-	if(From == m_pPlayer->GetCID() || Dmg < g_Config.m_SvHitBoxDmg)
+	if(From == m_pPlayer->GetCID() || Dmg < Config()->m_SvHitBoxDmg)
 		return false;
 
 	m_LastToucherID = From;
@@ -812,7 +812,7 @@ bool CCharacter::TakeDamage(vec2 Force, vec2 Source, int Dmg, int From, int Weap
 		CNetMsg_Sv_KillMsg Msg;
 		Msg.m_Victim = m_pPlayer->GetCID();
 		Msg.m_ModeSpecial = 0;
-		for(int i = 0 ; i < Server()->MaxClients(); i++)
+		for(int i = 0 ; i < MAX_CLIENTS; i++)
 		{
 			if(!Server()->ClientIngame(i))
 				continue;
@@ -915,7 +915,7 @@ void CCharacter::Snap(int SnappingClient)
 	}
 
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 ||
-		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->GetSpectatorID()))
+		(!Config()->m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->GetSpectatorID()))
 	{
 		pCharacter->m_Health = m_Health;
 		pCharacter->m_Armor = m_Armor;
@@ -991,7 +991,7 @@ bool CCharacter::Freeze(int Seconds)
 
 bool CCharacter::Freeze()
 {
-	return Freeze(g_Config.m_SvFreezeDelay);
+	return Freeze(Config()->m_SvFreezeDelay);
 }
 
 bool CCharacter::UnFreeze()

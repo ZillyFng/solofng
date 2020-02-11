@@ -8,7 +8,7 @@ CGameControllerMOD::CGameControllerMOD(class CGameContext *pGameServer)
 {
 	// Exchange this to a string that identifies your game mode.
 	// DM, TDM and CTF are reserved for teeworlds original modes.
-	if(str_comp_nocase(g_Config.m_SvGametype, "bolofng") == 0)
+	if(str_comp_nocase(Config()->m_SvGametype, "bolofng") == 0)
 		m_pGameType = "bolofng";
 	else
 		m_pGameType = "solofng";
