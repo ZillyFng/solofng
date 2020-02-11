@@ -1880,7 +1880,7 @@ static bool cmpTmp(const CFngStats *a, const CFngStats *b)
 
 void CGameContext::TopThread(void *pArg)
 {
-	DIR *pDir;
+	DIR *pDir = NULL;
 	struct dirent *pDe;
 	int load;
 	int start;
@@ -1993,9 +1993,9 @@ void CGameContext::TopThread(void *pArg)
 
 void CGameContext::RankThread(void *pArg)
 {
-	DIR *pDir;
+	DIR *pDir = NULL;
 	struct dirent *pDe;
-	int Rank;
+	int Rank = 404;
 	int Score;
 	int err = 0;
 	int load;
