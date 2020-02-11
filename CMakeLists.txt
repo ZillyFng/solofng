@@ -146,6 +146,9 @@ function(add_c_compiler_flag_if_supported VARIABLE FLAG)
 endfunction()
 
 if(NOT MSVC)
+  # ChillerDragon debugging solofng
+  add_c_compiler_flag_if_supported(OUR_FLAGS -fsanitize=address)
+
   # Protect the stack pointer.
   # -fstack-protector-all doesn't work on MinGW.
   add_c_compiler_flag_if_supported(OUR_FLAGS -fstack-protector-strong)
