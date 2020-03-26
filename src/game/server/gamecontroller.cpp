@@ -3,6 +3,7 @@
 #include <engine/shared/config.h>
 
 #include <game/mapitems.h>
+#include <game/version.h>
 
 #include "entities/character.h"
 #include "entities/pickup.h"
@@ -1204,15 +1205,251 @@ int IGameController::GetStartTeam()
 	return TEAM_SPECTATORS;
 }
 
-/*void IGameController::Com_Example(IConsole::IResult *pResult, void *pContext)
+void IGameController::Com_Help(IConsole::IResult *pResult, void *pContext)
 {
 	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
 	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
 
-	pSelf->GameServer()->SendBroadcast(pResult->GetString(0), -1);
-}*/
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "solofng by ChillerDragon - v%s", FNG_VERSION);
+	pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, aBuf);
+	pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "https://github.com/zillyfng/solofng");
+}
+
+void IGameController::Com_Cmdlist(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "commands: rank, stats, top5, round, cmdlist, help, info, config");
+	if(pSelf->Server()->IsAuthed(pComContext->m_ClientID))
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "admin: meta, save, admin, merge_failed");
+}
+
+void IGameController::Com_Stats(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	if(!pSelf->Config()->m_SvStats)
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "[stats] deactivated by admin.");
+		return;
+	}
+	if(pResult->NumArguments() == 0)
+		pSelf->GameServer()->ShowStats(pComContext->m_ClientID, pSelf->Server()->ClientName(pComContext->m_ClientID));
+	else
+		pSelf->GameServer()->ShowStats(pComContext->m_ClientID, pResult->GetString(0));
+}
+
+void IGameController::Com_Top5(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+	
+	if(!pSelf->Config()->m_SvStats || !pSelf->Config()->m_SvAllowRankCmds)
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "[stats] deactivated by admin.");
+		return;
+	}
+	int Top = atoi(pComContext->m_pArgs);
+	pSelf->GameServer()->ShowTopScore(pComContext->m_ClientID, Top);
+}
+
+void IGameController::Com_Rank(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	if(!pSelf->Config()->m_SvStats)
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "[stats] deactivated by admin.");
+		return;
+	}
+	if(pResult->NumArguments() == 0)
+		pSelf->GameServer()->ShowRank(pComContext->m_ClientID, pSelf->Server()->ClientName(pComContext->m_ClientID));
+	else
+		pSelf->GameServer()->ShowRank(pComContext->m_ClientID, pResult->GetString(0));
+}
+
+void IGameController::Com_Save(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	if(!pSelf->Config()->m_SvStats)
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "[stats] deactivated by admin.");
+		return;
+	}
+	if(pSelf->Server()->IsAuthedAdmin(pComContext->m_ClientID))
+		pSelf->GameServer()->SaveStats(pComContext->m_ClientID);
+	else
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "missing permission.");
+}
+
+void IGameController::Com_Round(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	if(pResult->NumArguments() == 0)
+		pSelf->GameServer()->ShowRoundStats(pComContext->m_ClientID, pSelf->Server()->ClientName(pComContext->m_ClientID));
+	else
+		pSelf->GameServer()->ShowRoundStats(pComContext->m_ClientID, pResult->GetString(0));
+}
+
+void IGameController::Com_Meta(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	if(!pSelf->Server()->IsAuthed(pComContext->m_ClientID))
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "missing permission.");
+		return;
+	}
+	if(pResult->NumArguments() == 0)
+	{
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "usage: /meta <playername>");
+		pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, "shows meta information based on stat files");
+		return;
+	}
+	pSelf->GameServer()->ShowStatsMeta(pComContext->m_ClientID, pResult->GetString(0));
+}
+
+void IGameController::Com_List(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "Online: %d Ingame: %d", pSelf->GameServer()->CountPlayers(), pSelf->GameServer()->CountIngamePlayers());
+	pSelf->GameServer()->SendChatTarget(pComContext->m_ClientID, aBuf);
+}
+
+void IGameController::Com_Config(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	int ClientID = pComContext->m_ClientID;
+	CPlayer *pPlayer = pSelf->GameServer()->m_apPlayers[ClientID];
+	if (!pPlayer)
+		return;
+	char aBuf[1024];
+	if(pResult->NumArguments() == 0)
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "Usage: /config <config> <value>");
+		pSelf->GameServer()->SendChatTarget(ClientID, "Configs: hammer");
+		pSelf->GameServer()->SendChatTarget(ClientID, "-	Values: fng, vanilla");
+		pSelf->GameServer()->SendChatTarget(ClientID, "Example: /config hammer vanilla");
+		return;
+	}
+	pPlayer->InitRoundStats();
+	if(!str_comp_nocase("hammer", pResult->GetString(0)))
+	{
+		if(pResult->NumArguments() == 1)
+		{
+			str_format(aBuf, sizeof(aBuf), "[config] hammer tune is set to '%s'", pPlayer->IsConfig(CFG_VANILLA_HAMMER) ? "vanilla" : "fng");
+			pSelf->GameServer()->SendChatTarget(ClientID, aBuf);
+		}
+		else
+		{
+			if(!str_comp_nocase(pResult->GetString(1), "fng"))
+			{
+				pSelf->GameServer()->SendChatTarget(ClientID, "[config] update hammer tune to 'fng'.");
+				pPlayer->UnsetConfig(CFG_VANILLA_HAMMER);
+			}
+			else if(!str_comp_nocase(pResult->GetString(1), "vanilla"))
+			{
+				pSelf->GameServer()->SendChatTarget(ClientID, "[config] update hammer tune to 'vanilla'.");
+				pPlayer->SetConfig(CFG_VANILLA_HAMMER);
+			}
+			else
+			{
+				pSelf->GameServer()->SendChatTarget(ClientID, "[config] invalid value use of those: fng, vanilla");
+			}
+		}
+	}
+	else
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "[config] invalid config use one of those: hammer");
+	}
+}
+
+void IGameController::Com_Admin(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	int ClientID = pComContext->m_ClientID;
+	if(!pSelf->Server()->IsAuthedAdmin(ClientID))
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "missing permission.");
+		return;
+	}
+	if(pSelf->GameServer()->m_StatSaveFails || pSelf->GameServer()->m_StatSaveCriticalFails)
+	{
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "[stats] fails: %d critical fails: %d", pSelf->GameServer()->m_StatSaveFails, pSelf->GameServer()->m_StatSaveCriticalFails);
+		pSelf->GameServer()->SendChatTarget(ClientID, aBuf);
+	}
+	else
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "[stats] all saves successful.");
+	}
+}
+
+void IGameController::Com_MergeFailed(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	int ClientID = pComContext->m_ClientID;
+	if(!pSelf->Server()->IsAuthedAdmin(ClientID))
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "missing permission.");
+		return;
+	}
+	pSelf->GameServer()->MergeFailedStats(ClientID);
+}
+
+#ifdef CONF_DEBUG
+void IGameController::Com_Crash(IConsole::IResult *pResult, void *pContext)
+{
+	CCommandManager::SCommandContext *pComContext = (CCommandManager::SCommandContext *)pContext;
+	IGameController *pSelf = (IGameController *)pComContext->m_pContext;
+
+	int ClientID = pComContext->m_ClientID;
+	if(!pSelf->Server()->IsAuthedAdmin(ClientID))
+	{
+		pSelf->GameServer()->SendChatTarget(ClientID, "missing permission.");
+		return;
+	}
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		pSelf->GameServer()->m_apPlayers[i]->GetCharacter()->m_DeepFreeze = 2;
+	}
+}
+#endif
 
 void IGameController::RegisterChatCommands(CCommandManager *pManager)
 {
-	//pManager->AddCommand("test", "Test the command system", "r", Com_Example, this);
+	pManager->AddCommand("help", "info about the server", "", Com_Help, this);
+	pManager->AddCommand("info", "info about the server", "", Com_Help, this);
+	pManager->AddCommand("cmdlist", "info about sever commands", "", Com_Cmdlist, this);
+	pManager->AddCommand("stats", "show stats", "?r", Com_Stats, this);
+	pManager->AddCommand("top5", "show global top player scores", "?i", Com_Top5, this);
+	pManager->AddCommand("rank", "show players global rank", "?r", Com_Rank, this);
+	pManager->AddCommand("save", "save current round stats", "", Com_Save, this);
+	pManager->AddCommand("round", "show current round stats", "?s", Com_Round, this);
+	pManager->AddCommand("meta", "meta data for admins", "?r", Com_Meta, this);
+	pManager->AddCommand("list", "show amount of connected players", "", Com_List, this);
+	pManager->AddCommand("config", "your personal configurations", "ss", Com_Config, this);
+	pManager->AddCommand("admin", "show server stats", "", Com_Admin, this);
+	pManager->AddCommand("merge_failed", "merge failed stats (for admins)", "", Com_MergeFailed, this);
+#ifdef CONF_DEBUG
+	pManager->AddCommand("crash", "crashes the server", "", Com_Crash, this);
+#endif
 }

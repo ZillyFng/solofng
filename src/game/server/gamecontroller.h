@@ -224,7 +224,21 @@ public:
 	int GetRealPlayerNum() const { return m_aTeamSize[TEAM_RED]+m_aTeamSize[TEAM_BLUE]; }
 	int GetStartTeam();
 
-	//static void Com_Example(IConsole::IResult *pResult, void *pContext);
+	static void Com_Help(IConsole::IResult *pResult, void *pContext);
+	static void Com_Cmdlist(IConsole::IResult *pResult, void *pContext);
+	static void Com_Stats(IConsole::IResult *pResult, void *pContext);
+	static void Com_Top5(IConsole::IResult *pResult, void *pContext);
+	static void Com_Rank(IConsole::IResult *pResult, void *pContext);
+	static void Com_Save(IConsole::IResult *pResult, void *pContext);
+	static void Com_Round(IConsole::IResult *pResult, void *pContext);
+	static void Com_Meta(IConsole::IResult *pResult, void *pContext);
+	static void Com_List(IConsole::IResult *pResult, void *pContext);
+	static void Com_Config(IConsole::IResult *pResult, void *pContext);
+	static void Com_Admin(IConsole::IResult *pResult, void *pContext);
+	static void Com_MergeFailed(IConsole::IResult *pResult, void *pContext);
+#ifdef CONF_DEBUG
+	static void Com_Crash(IConsole::IResult *pResult, void *pContext);
+#endif
 	virtual void RegisterChatCommands(CCommandManager *pManager);
 };
 
