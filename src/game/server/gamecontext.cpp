@@ -2453,195 +2453,28 @@ void CGameContext::MergeFailedStats(int ClientID)
 
 void CGameContext::ChatCommand(int ClientID, const char *pFullCmd)
 {
-	dbg_msg("chat_cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
-	char aBuf[1024];
+	dbg_msg("legacy-cmd", "ClientID=%d executed '/%s'", ClientID, pFullCmd);
 	CPlayer *pPlayer = m_apPlayers[ClientID];
 	if (!pPlayer)
 		return;
-	if(!str_comp_nocase(pFullCmd, "help") || !str_comp_nocase(pFullCmd, "info"))
+
+	char aCmd[512];
+	str_copy(aCmd, pFullCmd, sizeof(aCmd));
+	char aArgs[512];
+	mem_zero(aArgs, sizeof(aArgs));
+	for(int i = 0; i < 512; i++)
 	{
-		str_format(aBuf, sizeof(aBuf), "solofng by ChillerDragon - v%s", FNG_VERSION);
-		SendChatTarget(ClientID, aBuf);
-		SendChatTarget(ClientID, "https://github.com/zillyfng/solofng");
-	}
-	else if(!str_comp_nocase("cmdlist", pFullCmd))
-	{
-		SendChatTarget(ClientID, "commands: rank, stats, top5, round, cmdlist, help, info, config");
-		if (Server()->IsAuthed(ClientID))
-			SendChatTarget(ClientID, "admin: meta, save, admin, merge_failed");
-	}
-	else if(!str_comp_nocase("stats", pFullCmd))
-	{
-		if (!Config()->m_SvStats)
+		if(pFullCmd[i] == '\0')
+			break;
+		if(pFullCmd[i] == ' ')
 		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		ShowStats(ClientID, Server()->ClientName(ClientID));
-	}
-	else if(!str_comp_nocase_num("stats ", pFullCmd, 6))
-	{
-		if (!Config()->m_SvStats)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		ShowStats(ClientID, pFullCmd+6);
-	}
-	else if(!str_comp_nocase("top5", pFullCmd))
-	{
-		if (!Config()->m_SvStats || !Config()->m_SvAllowRankCmds)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		ShowTopScore(ClientID);
-	}
-	else if(!str_comp_nocase_num("top5 ", pFullCmd, 5))
-	{
-		if (!Config()->m_SvStats || !Config()->m_SvAllowRankCmds)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		int Top = atoi(pFullCmd+5);
-		ShowTopScore(ClientID, Top);
-	}
-	else if(!str_comp_nocase("rank", pFullCmd))
-	{
-		if (!Config()->m_SvStats || !Config()->m_SvAllowRankCmds)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		ShowRank(ClientID, Server()->ClientName(ClientID));
-	}
-	else if(!str_comp_nocase_num("rank ", pFullCmd, 5))
-	{
-		if (!Config()->m_SvStats || !Config()->m_SvAllowRankCmds)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		ShowRank(ClientID, pFullCmd+5);
-	}
-	else if(!str_comp_nocase("save", pFullCmd))
-	{
-		if (!Config()->m_SvStats)
-		{
-			SendChatTarget(ClientID, "[stats] deactivated by admin.");
-			return;
-		}
-		if (Server()->IsAuthedAdmin(ClientID))
-			SaveStats(ClientID);
-		else
-			SendChatTarget(ClientID, "missing permission.");
-	}
-	else if (!str_comp_nocase_num("round ", pFullCmd, 6))
-	{
-		ShowRoundStats(ClientID, pFullCmd+6);
-	}
-	else if (!str_comp_nocase("round", pFullCmd))
-	{
-		ShowRoundStats(ClientID, Server()->ClientName(ClientID));
-	}
-	else if(!str_comp_nocase_num("meta ", pFullCmd, 5))
-	{
-		if (Server()->IsAuthed(ClientID))
-			ShowStatsMeta(ClientID, pFullCmd+5);
-		else
-			SendChatTarget(ClientID, "missing permission.");
-	}
-	else if(!str_comp_nocase("list", pFullCmd))
-	{
-		str_format(aBuf, sizeof(aBuf), "Online: %d Ingame: %d", CountPlayers(), CountIngamePlayers());
-		SendChatTarget(ClientID, aBuf);
-	}
-	else if(!str_comp_nocase("config", pFullCmd))
-	{
-		SendChatTarget(ClientID, "Usage: /config <config> <value>");
-		SendChatTarget(ClientID, "Configs: hammer");
-		SendChatTarget(ClientID, "-	Values: fng, vanilla");
-		SendChatTarget(ClientID, "Example: /config hammer vanilla");
-	}
-	else if(!str_comp_nocase_num("config ", pFullCmd, 7))
-	{
-		pPlayer->InitRoundStats();
-		char aCfg[16];
-		str_copy(aCfg, pFullCmd+7, sizeof(aCfg));
-		if(!str_comp_nocase("hammer", aCfg))
-		{
-			str_format(aBuf, sizeof(aBuf), "[config] hammer tune is set to '%s'", pPlayer->IsConfig(CFG_VANILLA_HAMMER) ? "vanilla" : "fng");
-			SendChatTarget(ClientID, aBuf);
-		}
-		else if(!str_comp_nocase_num("hammer ", aCfg, 7))
-		{
-			char aValue[16];
-			str_copy(aValue, aCfg+7, sizeof(aValue));
-			if (!str_comp_nocase(aValue, "fng"))
-			{
-				SendChatTarget(ClientID, "[config] update hammer tune to 'fng'.");
-				pPlayer->UnsetConfig(CFG_VANILLA_HAMMER);
-			}
-			else if (!str_comp_nocase(aValue, "vanilla"))
-			{
-				SendChatTarget(ClientID, "[config] update hammer tune to 'vanilla'.");
-				pPlayer->SetConfig(CFG_VANILLA_HAMMER);
-			}
-			else
-			{
-				SendChatTarget(ClientID, "[config] invalid value use of those: fng, vanilla");
-			}
-		}
-		else
-		{
-			SendChatTarget(ClientID, "[config] invalid config use one of those: hammer");
+			str_copy(aArgs, &pFullCmd[i], sizeof(aArgs));
+			aCmd[i] = '\0';
+			break;
 		}
 	}
-	else if(!str_comp_nocase("admin", pFullCmd))
-	{
-		if (!Server()->IsAuthedAdmin(ClientID))
-		{
-			SendChatTarget(ClientID, "missing permission.");
-			return;
-		}
-		if (m_StatSaveFails || m_StatSaveCriticalFails)
-		{
-			str_format(aBuf, sizeof(aBuf), "[stats] fails: %d critical fails: %d", m_StatSaveFails, m_StatSaveCriticalFails);
-			SendChatTarget(ClientID, aBuf);
-		}
-		else
-		{
-			SendChatTarget(ClientID, "[stats] all saves successful.");
-		}
-	}
-	else if(!str_comp_nocase("merge_failed", pFullCmd))
-	{
-		if (!Server()->IsAuthedAdmin(ClientID))
-		{
-			SendChatTarget(ClientID, "missing permission.");
-			return;
-		}
-		MergeFailedStats(ClientID);
-	}
-#ifdef CONF_DEBUG
-	else if(!str_comp_nocase("crash", pFullCmd))
-	{
-		if (!Server()->IsAuthedAdmin(ClientID))
-		{
-			SendChatTarget(ClientID, "missing permission.");
-			return;
-		}
-		for (int i = 0; i < MAX_CLIENTS; i++)
-		{
-			m_apPlayers[i]->GetCharacter()->m_DeepFreeze = 2;
-		}
-	}
-#endif
-	else
-	{
+	if(CommandManager()->OnCommand(aCmd, aArgs, ClientID))
 		SendChatTarget(ClientID, "unknown command try '/cmdlist'.");
-	}
 }
 
 int CGameContext::GetCIDByName(const char *pName)

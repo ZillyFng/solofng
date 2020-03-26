@@ -1446,7 +1446,7 @@ void IGameController::RegisterChatCommands(CCommandManager *pManager)
 	pManager->AddCommand("round", "show current round stats", "?s", Com_Round, this);
 	pManager->AddCommand("meta", "meta data for admins", "?r", Com_Meta, this);
 	pManager->AddCommand("list", "show amount of connected players", "", Com_List, this);
-	pManager->AddCommand("config", "your personal configurations", "ss", Com_Config, this);
+	pManager->AddCommand("config", "your personal configurations", "?ss", Com_Config, this);
 	pManager->AddCommand("admin", "show server stats", "", Com_Admin, this);
 	pManager->AddCommand("merge_failed", "merge failed stats (for admins)", "", Com_MergeFailed, this);
 #ifdef CONF_DEBUG
