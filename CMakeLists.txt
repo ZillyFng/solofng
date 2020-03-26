@@ -1200,7 +1200,6 @@ foreach(datafile ${DATA})
   file(COPY ${datafile} DESTINATION ${DESTINATION})
 endforeach()
 set(COPY_FILES
-  ${CURL_COPY_FILES}
   ${FREETYPE_COPY_FILES}
   ${SDL2_COPY_FILES}
 )
