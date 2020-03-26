@@ -373,8 +373,8 @@ show_dependency_status("SDL2" SDL2)
 show_dependency_status("Wavpack" WAVPACK)
 show_dependency_status("Zlib" ZLIB)
 
-if(CLIENT AND NOT(CURL_FOUND))
-  message(SEND_ERROR "You must install Curl to compile DDNet")
+if(NOT(CURL_FOUND))
+  message(SEND_ERROR "You must install Curl to compile solofng server")
 endif()
 
 if(NOT(PYTHONINTERP_FOUND))
