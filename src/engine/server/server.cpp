@@ -1353,7 +1353,6 @@ void CServer::InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterS
 
 #include "signal.h"
 #include "stdio.h"
-#include "stdlib.h"
 
 static class IGameServer *sp_GameServer;
 
