@@ -413,7 +413,6 @@ elseif(TARGET_OS STREQUAL "mac")
   find_library(COCOA Cocoa)
   find_library(OPENGL OpenGL)
   set(PLATFORM_CLIENT
-    src/osxlaunch/client.h
     src/osxlaunch/client.m
   )
   set(PLATFORM_CLIENT_LIBS ${COCOA} ${OPENGL})
@@ -1740,6 +1739,7 @@ add_custom_target(everything DEPENDS ${TARGETS_OWN})
 
 if(GTEST_FOUND OR DOWNLOAD_GTEST)
   set_src(TESTS GLOB src/test
+    datafile.cpp
     fs.cpp
     git_revision.cpp
     hash.cpp

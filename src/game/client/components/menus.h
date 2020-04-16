@@ -437,6 +437,9 @@ private:
 	int m_DownloadLastCheckSize;
 	float m_DownloadSpeed;
 
+	// for password popup
+	char m_aPasswordPopupServerAddress[256];
+
 	// for call vote
 	int m_CallvoteSelectedOption;
 	int m_CallvoteSelectedPlayer;
@@ -469,8 +472,8 @@ private:
 	};
 
 	sorted_array<CDemoItem> m_lDemos;
-	char m_aCurrentDemoFolder[256];
-	char m_aCurrentDemoFile[64];
+	char m_aCurrentDemoFolder[IO_MAX_PATH_LENGTH];
+	char m_aCurrentDemoFile[IO_MAX_PATH_LENGTH];
 	int m_DemolistSelectedIndex;
 	bool m_DemolistSelectedIsDir;
 	int m_DemolistStorageType;
@@ -712,7 +715,7 @@ private:
 	void RenderServerbrowserInfoTab(CUIRect View);
 	void RenderServerbrowserFriendList(CUIRect View);
 	void RenderDetailInfo(CUIRect View, const CServerInfo *pInfo);
-	void RenderDetailScoreboard(CUIRect View, const CServerInfo *pInfo, int RowCount, vec4 TextColor = vec4(1,1,1,1));
+	void RenderDetailScoreboard(CUIRect View, const CServerInfo *pInfo, int RowCount, vec4 TextColor, vec4 TextOutlineColor);
 	void RenderServerbrowserServerDetail(CUIRect View, const CServerInfo *pInfo);
 	void RenderServerbrowserBottomBox(CUIRect View);
 	void RenderServerbrowserOverlay();
