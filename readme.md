@@ -4,10 +4,9 @@ Maintained by ChillerDragon. Who did not invent fng.
 This is just yet another version of fng for teeworlds 0.7.
 The original fng is apparently written by some "TOM".
 
-For a probably more complete fng version that also supports teams check out:
+For a more complete and maintained fng/solofng mod with stats and 0.6/0.7 support checkout ddnet-insta:
 
-
-https://github.com/sirius1242/teeworlds-solofng
+https://github.com/ddnet-insta/ddnet-insta
 
 Based on the game teeworlds.
 Please visit https://www.teeworlds.com/ for up-to-date information about the game.
